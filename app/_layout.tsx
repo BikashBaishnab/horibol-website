@@ -1,24 +1,74 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import * as Notifications from 'expo-notifications';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { PostHogProvider } from 'posthog-react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { AnimatedSplashScreen } from '../components/common';
+import { AuthProvider } from '../context/AuthContext';
+import { CartProvider } from '../context/CartContext';
+import { ToastProvider } from '../context/ToastContext';
+import { UserLocationProvider } from '../context/UserLocationContext';
+import "../global.css";
+import { registerForPushNotificationsAsync } from '../services/notification.service';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const [showSplash, setShowSplash] = useState(true);
+  const notificationListener = useRef<Notifications.Subscription>(undefined);
+  const responseListener = useRef<Notifications.Subscription>(undefined);
+
+  useEffect(() => {
+    registerForPushNotificationsAsync().then(token => {
+      if (token) {
+        console.log('Push Token Initialized:', token);
+      }
+    });
+
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification Received:', notification);
+    });
+
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Notification Response:', response);
+    });
+
+    return () => {
+      if (notificationListener.current) {
+        notificationListener.current.remove();
+      }
+      if (responseListener.current) {
+        responseListener.current.remove();
+      }
+    };
+  }, []);
+
+  if (showSplash) {
+    return <AnimatedSplashScreen onAnimationFinish={() => setShowSplash(false)} />;
+  }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <PostHogProvider
+      apiKey="phc_q3NV8nF8rbYBd6iIZynr3uATQla77YLZMGitoTFl8dn" // The key from your screenshot
+      options={{
+        host: "https://us.i.posthog.com", // You confirmed you are using US
+        enableSessionReplay: true, // Enables the video recording
+        sessionReplayConfig: {
+          maskAllTextInputs: true, // Hides passwords/credit card numbers automatically
+          maskAllImages: false,    // Keeps your product images visible in the replay
+        }
+      }}
+    >
+      <AuthProvider>
+        <UserLocationProvider>
+          <CartProvider>
+            <ToastProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+                <Stack.Screen name="auth/otp" options={{ headerShown: false }} />
+              </Stack>
+            </ToastProvider>
+          </CartProvider>
+        </UserLocationProvider>
+      </AuthProvider>
+    </PostHogProvider>
   );
 }
