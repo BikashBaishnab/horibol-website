@@ -54,4 +54,5 @@ const styles = StyleSheet.create({
     },
 });
 
+StaggeredSection.displayName = 'StaggeredSection';
 export default StaggeredSection;

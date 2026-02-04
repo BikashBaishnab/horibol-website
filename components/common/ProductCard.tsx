@@ -109,6 +109,7 @@ const ProductCard = React.memo(({
     );
 });
 
+ProductCard.displayName = 'ProductCard';
 export default ProductCard;
 
 const styles = StyleSheet.create({

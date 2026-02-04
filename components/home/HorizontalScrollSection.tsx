@@ -34,4 +34,5 @@ const styles = StyleSheet.create({
     },
 });
 
+HorizontalScrollSection.displayName = 'HorizontalScrollSection';
 export default HorizontalScrollSection;

@@ -100,4 +100,5 @@ const styles = StyleSheet.create({
     },
 });
 
+SectionRenderer.displayName = 'SectionRenderer';
 export default SectionRenderer;

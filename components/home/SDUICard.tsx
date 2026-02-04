@@ -104,4 +104,5 @@ const styles = StyleSheet.create({
     },
 });
 
+SDUICard.displayName = 'SDUICard';
 export default SDUICard;

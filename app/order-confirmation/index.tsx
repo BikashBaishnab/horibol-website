@@ -11,7 +11,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 import {
     Animated,
-    Dimensions,
     Easing,
     ScrollView,
     StyleSheet,
@@ -24,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // Theme
 import { BorderRadius, Colors, FontSize, FontWeight, Shadows, Spacing } from '../../theme';
 
-const { width } = Dimensions.get('window');
+// const { width } = Dimensions.get('window');
 
 export default function OrderConfirmationScreen() {
     const router = useRouter();
@@ -208,14 +207,14 @@ export default function OrderConfirmationScreen() {
 
                     {/* Next Steps */}
                     <View style={styles.stepsContainer}>
-                        <Text style={styles.stepsTitle}>What's Next?</Text>
+                        <Text style={styles.stepsTitle}>What&apos;s Next?</Text>
 
                         <View style={styles.stepItem}>
                             <View style={styles.stepIcon}>
                                 <Ionicons name="mail-outline" size={18} color={Colors.primary} />
                             </View>
                             <Text style={styles.stepText}>
-                                You'll receive order updates via email & SMS
+                                You&apos;ll receive order updates via email &amp; SMS
                             </Text>
                         </View>
 
@@ -224,7 +223,7 @@ export default function OrderConfirmationScreen() {
                                 <Ionicons name="notifications-outline" size={18} color={Colors.primary} />
                             </View>
                             <Text style={styles.stepText}>
-                                Track your order status in 'My Orders'
+                                Track your order status in &apos;My Orders&apos;
                             </Text>
                         </View>
 

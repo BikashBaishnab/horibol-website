@@ -146,7 +146,7 @@ export default function WriteReviewScreen() {
                         <View style={styles.tipsContent}>
                             <Text style={styles.tipsTitle}>Review Tips</Text>
                             <Text style={styles.tipsText}>
-                                • Share what you liked or didn't like{'\n'}
+                                • Share what you liked or didn&apos;t like{'\n'}
                                 • Mention quality, fit, or performance{'\n'}
                                 • Be honest and helpful to other buyers
                             </Text>

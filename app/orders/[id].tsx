@@ -426,7 +426,7 @@ export default function OrderDetailScreen() {
                 <View style={styles.errorContainer}>
                     <MaterialCommunityIcons name="alert-circle-outline" size={64} color={Colors.text.tertiary} />
                     <Text style={styles.errorTitle}>Order Not Found</Text>
-                    <Text style={styles.errorSubtitle}>We couldn't find this order</Text>
+                    <Text style={styles.errorSubtitle}>We couldn&apos;t find this order</Text>
                     <TouchableOpacity style={styles.backToOrdersButton} onPress={() => router.back()}>
                         <Text style={styles.backToOrdersText}>Back to Orders</Text>
                     </TouchableOpacity>

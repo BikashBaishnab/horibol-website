@@ -39,4 +39,5 @@ const styles = StyleSheet.create({
     },
 });
 
+Grid2x2Section.displayName = 'Grid2x2Section';
 export default Grid2x2Section;

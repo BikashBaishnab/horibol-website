@@ -72,4 +72,5 @@ const styles = StyleSheet.create({
     },
 });
 
+BannerSection.displayName = 'BannerSection';
 export default BannerSection;

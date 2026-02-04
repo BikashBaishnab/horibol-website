@@ -107,7 +107,7 @@ export default function OtpVerificationScreen() {
                 </View>
 
                 <TouchableOpacity onPress={handleResend}>
-                    <Text style={styles.resendText}>Didn't get OTP? <Text style={styles.resendLink}>Resend SMS</Text></Text>
+                    <Text style={styles.resendText}>Didn&apos;t get OTP? <Text style={styles.resendLink}>Resend SMS</Text></Text>
                 </TouchableOpacity>
 
                 {/* Verify Button */}

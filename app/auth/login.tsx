@@ -90,7 +90,7 @@ export default function LoginScreen() {
 
                     {/* Footer Terms */}
                     <Text style={styles.termsText}>
-                        By continuing, you confirm that you are above 18 years of age and agree to Horibol's{' '}
+                        By continuing, you confirm that you are above 18 years of age and agree to Horibol&apos;s{' '}
                         <Text
                             style={styles.link}
                             onPress={() => handleOpenPolicy('https://www.horibol.com/terms-and-conditions')}
