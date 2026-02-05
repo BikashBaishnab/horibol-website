@@ -155,6 +155,8 @@ export interface Category {
     id: number;
     name: string;
     image?: string;
+    parent_id?: number | null;
+    show_brands?: boolean;
 }
 
 // ============================================================

@@ -42,3 +42,8 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Google Play Console Key
+play-console-key.json
+*.json.key
+secrets/*.json

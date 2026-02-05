@@ -1,0 +1,11 @@
+{
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "framework": "expo",
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}

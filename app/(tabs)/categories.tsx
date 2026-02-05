@@ -5,26 +5,26 @@
  * Premium UI with animated cards and smooth transitions.
  */
 
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Dimensions,
     FlatList,
-    RefreshControl,
     StyleSheet,
     Text,
     TouchableOpacity,
     View
 } from 'react-native';
-import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCart } from '../../context/CartContext';
+import { Brand, getBrandsWithLogos } from '../../services/brand.service';
 import { Category, CategoryWithChildren, getCategoriesWithHierarchy } from '../../services/category.service';
-import { BorderRadius, Colors, FontSize, FontWeight, Shadows, Spacing } from '../../theme';
+import { Colors, FontSize, FontWeight, Shadows, Spacing } from '../../theme';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - Spacing.md * 3) / 2;
@@ -50,40 +50,62 @@ export default function CategoriesScreen() {
 
     const [categories, setCategories] = useState<CategoryWithChildren[]>([]);
     const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
     const [selectedParent, setSelectedParent] = useState<CategoryWithChildren | null>(null);
+    const [brands, setBrands] = useState<Brand[]>([]);
+    const [brandsLoading, setBrandsLoading] = useState(false);
 
     useEffect(() => {
         loadCategories();
     }, []);
 
+    useEffect(() => {
+        if (selectedParent?.show_brands) {
+            loadBrands(selectedParent.id);
+        } else {
+            setBrands([]);
+        }
+    }, [selectedParent]);
+
+    const loadBrands = async (id: number) => {
+        setBrandsLoading(true);
+        // Fetch only featured brands for the selected category
+        const data = await getBrandsWithLogos({
+            categoryId: id,
+            onlyFeatured: true
+        });
+
+        setBrands(data);
+        setBrandsLoading(false);
+    };
+
     const loadCategories = async () => {
         setLoading(true);
         const data = await getCategoriesWithHierarchy();
         setCategories(data);
+        if (data.length > 0) {
+            setSelectedParent(data[0]);
+        }
         setLoading(false);
     };
 
-    const handleRefresh = useCallback(async () => {
-        setRefreshing(true);
-        await loadCategories();
-        setRefreshing(false);
-    }, []);
-
     const handleCategoryPress = (category: Category) => {
-        // Navigate to search results filtered by category
+        // If it's a "View All" group (id: -1), use the parent's data
+        const isViewAll = category.id === -1;
+
         router.push({
             pathname: '/search-results',
-            params: { query: category.name, categoryId: category.id.toString() }
+            params: {
+                query: isViewAll ? selectedParent?.name : category.name,
+                categoryId: isViewAll ? selectedParent?.id.toString() : category.id.toString()
+            }
         });
     };
 
-    const handleParentPress = (parent: CategoryWithChildren) => {
-        if (parent.children && parent.children.length > 0) {
-            setSelectedParent(parent);
-        } else {
-            handleCategoryPress(parent);
-        }
+    const handleBrandPress = (brand: Brand) => {
+        router.push({
+            pathname: '/search-results',
+            params: { query: brand.name, brands: brand.name }
+        });
     };
 
     const getImageSource = (category: Category) => {
@@ -96,16 +118,11 @@ export default function CategoriesScreen() {
         return FALLBACK_IMAGE;
     };
 
-    const getGradientColor = (index: number) => {
-        return GRADIENT_COLORS[index % GRADIENT_COLORS.length];
-    };
-
     // Render header
     const renderHeader = () => (
         <View style={[styles.header, { paddingTop: insets.top }]}>
             <View style={styles.headerLeft}>
                 <Text style={styles.headerTitle}>Categories</Text>
-                <Text style={styles.headerSubtitle}>Browse by category</Text>
             </View>
             <TouchableOpacity
                 style={styles.cartButton}
@@ -121,127 +138,84 @@ export default function CategoriesScreen() {
         </View>
     );
 
-    // Render parent category card
-    const renderParentCard = ({ item, index }: { item: CategoryWithChildren; index: number }) => {
-        const hasImage = item.image_url || item.image;
-        const gradientColors = getGradientColor(index);
-
+    // Sidebar Category Item
+    const renderSidebarItem = ({ item }: { item: CategoryWithChildren }) => {
+        const isSelected = selectedParent?.id === item.id;
         return (
-            <Animated.View entering={FadeInDown.delay(index * 50).duration(400)}>
-                <TouchableOpacity
-                    style={[
-                        styles.parentCard,
-                        !hasImage && { backgroundColor: gradientColors[0] }
-                    ]}
-                    activeOpacity={0.85}
-                    onPress={() => handleParentPress(item)}
+            <TouchableOpacity
+                style={[styles.sidebarItem, isSelected && styles.sidebarItemActive]}
+                onPress={() => setSelectedParent(item)}
+            >
+                {isSelected && <View style={styles.activeIndicator} />}
+                <View style={[styles.sidebarIconContainer, isSelected && styles.sidebarIconActive]}>
+                    <Image
+                        source={getImageSource(item)}
+                        style={styles.sidebarIcon}
+                        contentFit="contain"
+                    />
+                </View>
+                <Text
+                    style={[styles.sidebarText, isSelected && styles.sidebarTextActive]}
+                    numberOfLines={2}
                 >
-                    {hasImage ? (
-                        <Image
-                            source={getImageSource(item)}
-                            style={styles.parentImage}
-                            contentFit="cover"
-                            transition={300}
-                        />
-                    ) : (
-                        <View style={styles.iconContainer}>
-                            <MaterialCommunityIcons
-                                name="shape-outline"
-                                size={40}
-                                color="rgba(255,255,255,0.9)"
-                            />
-                        </View>
-                    )}
-                    <View style={[styles.parentOverlay, hasImage && styles.parentOverlayWithImage]}>
-                        <Text style={styles.parentName} numberOfLines={2}>{item.name}</Text>
-                        {item.children && item.children.length > 0 && (
-                            <View style={styles.subcategoryBadge}>
-                                <Text style={styles.subcategoryCount}>
-                                    {item.children.length} subcategories
-                                </Text>
-                                <Ionicons name="chevron-forward" size={14} color={Colors.text.inverse} />
-                            </View>
-                        )}
-                    </View>
-                </TouchableOpacity>
-            </Animated.View>
+                    {item.name}
+                </Text>
+            </TouchableOpacity>
         );
     };
 
-    // Render subcategory list (when a parent is selected)
-    const renderSubcategoryView = () => {
-        if (!selectedParent) return null;
-
+    // Subcategory Group Section
+    const renderSubcategoryGroup = (group: CategoryWithChildren) => {
         return (
-            <View style={styles.subcategoryContainer}>
-                {/* Breadcrumb Header */}
-                <Animated.View entering={FadeInRight.duration(300)} style={styles.breadcrumbHeader}>
-                    <TouchableOpacity
-                        style={styles.backButton}
-                        onPress={() => setSelectedParent(null)}
-                    >
-                        <Ionicons name="arrow-back" size={22} color={Colors.text.primary} />
-                    </TouchableOpacity>
-                    <View style={styles.breadcrumbText}>
-                        <Text style={styles.breadcrumbLabel}>Subcategories of</Text>
-                        <Text style={styles.breadcrumbTitle}>{selectedParent.name}</Text>
-                    </View>
-                    <TouchableOpacity
-                        style={styles.viewAllButton}
-                        onPress={() => handleCategoryPress(selectedParent)}
-                    >
-                        <Text style={styles.viewAllText}>View All</Text>
-                    </TouchableOpacity>
-                </Animated.View>
-
-                {/* Subcategory Grid */}
-                <FlatList
-                    data={selectedParent.children}
-                    numColumns={2}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item, index }) => (
-                        <Animated.View entering={FadeInDown.delay(index * 30).duration(300)}>
+            <View key={group.id} style={styles.groupContainer}>
+                <View style={styles.groupHeader}>
+                    <Text style={styles.groupTitle}>{group.name}</Text>
+                    <View style={styles.groupLine} />
+                </View>
+                <View style={styles.subGrid}>
+                    {group.children.map((sub, idx) => (
+                        <Animated.View
+                            key={sub.id}
+                            style={styles.subItem}
+                            entering={FadeInDown.delay(idx * 30).duration(400)}
+                        >
                             <TouchableOpacity
-                                style={styles.subcategoryCard}
-                                activeOpacity={0.8}
-                                onPress={() => handleCategoryPress(item)}
+                                onPress={() => handleCategoryPress(sub)}
+                                style={styles.subItemContent}
                             >
-                                <Image
-                                    source={getImageSource(item)}
-                                    style={styles.subcategoryImage}
-                                    contentFit="cover"
-                                    transition={200}
-                                />
-                                <Text style={styles.subcategoryName} numberOfLines={2}>
-                                    {item.name}
+                                <View style={styles.subImageContainer}>
+                                    <Image
+                                        source={getImageSource(sub)}
+                                        style={styles.subImage}
+                                        contentFit="contain"
+                                    />
+                                </View>
+                                <Text style={styles.subText} numberOfLines={2}>
+                                    {sub.name}
                                 </Text>
                             </TouchableOpacity>
                         </Animated.View>
-                    )}
-                    contentContainerStyle={styles.subcategoryList}
-                    columnWrapperStyle={styles.columnWrapper}
-                    showsVerticalScrollIndicator={false}
-                />
+                    ))}
+                    {/* View All placeholder for group */}
+                    <TouchableOpacity
+                        style={styles.subItem}
+                        onPress={() => handleCategoryPress(group)}
+                    >
+                        <View style={[styles.subImageContainer, styles.viewAllGrid]}>
+                            <Ionicons name="apps-outline" size={24} color={Colors.text.secondary} />
+                        </View>
+                        <Text style={styles.subText}>View All</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         );
     };
 
-    // Render empty state
-    const renderEmptyState = () => (
-        <View style={styles.emptyState}>
-            <MaterialCommunityIcons name="shape-outline" size={80} color={Colors.text.tertiary} />
-            <Text style={styles.emptyTitle}>No Categories</Text>
-            <Text style={styles.emptySubtitle}>Categories will appear here once added</Text>
-        </View>
-    );
-
     if (loading) {
         return (
             <View style={[styles.container, { paddingTop: insets.top }]}>
-                {renderHeader()}
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={Colors.primary} />
-                    <Text style={styles.loadingText}>Loading categories...</Text>
                 </View>
             </View>
         );
@@ -250,32 +224,131 @@ export default function CategoriesScreen() {
     return (
         <View style={styles.container}>
             {renderHeader()}
+            <View style={styles.content}>
+                {/* Left Sidebar */}
+                <View style={styles.sidebar}>
+                    <FlatList
+                        data={categories}
+                        renderItem={renderSidebarItem}
+                        keyExtractor={(item) => item.id.toString()}
+                        showsVerticalScrollIndicator={false}
+                    />
+                </View>
 
-            {selectedParent ? (
-                renderSubcategoryView()
-            ) : (
-                <FlatList
-                    data={categories}
-                    numColumns={2}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={renderParentCard}
-                    contentContainerStyle={styles.listContent}
-                    columnWrapperStyle={styles.columnWrapper}
-                    showsVerticalScrollIndicator={false}
-                    ListEmptyComponent={renderEmptyState}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={handleRefresh}
-                            colors={[Colors.primary]}
-                            tintColor={Colors.primary}
-                        />
-                    }
-                />
-            )}
+                {/* Right Pane */}
+                <View style={styles.rightPane}>
+                    <FlatList
+                        data={selectedParent?.children || []}
+                        keyExtractor={(item) => item.id.toString()}
+                        ListHeaderComponent={() => (
+                            <View style={styles.rightHeader}>
+                                <Text style={styles.rightHeaderTitle}>
+                                    {selectedParent?.name}
+                                </Text>
+                            </View>
+                        )}
+                        renderItem={({ item, index }) => {
+                            // If it has children (sub-sub-categories), render as a group
+                            if (item.children && item.children.length > 0) {
+                                return renderSubcategoryGroup(item);
+                            }
+
+                            const hasAnyGroupedChildren = selectedParent?.children.some(c => c.children.length > 0);
+
+                            if (!hasAnyGroupedChildren) {
+                                return null;
+                            }
+
+                            const firstLeafIndex = selectedParent?.children.findIndex(c => c.children.length === 0);
+                            if (index === firstLeafIndex) {
+                                const leafItems = selectedParent?.children.filter(c => c.children.length === 0) || [];
+                                return renderSubcategoryGroup({
+                                    id: -1,
+                                    name: `View All ${selectedParent?.name}`,
+                                    children: leafItems,
+                                    parent_id: selectedParent?.id || null,
+                                } as any);
+                            }
+
+                            return null;
+                        }}
+                        ListEmptyComponent={() => (
+                            <View style={styles.emptyContent}>
+                                <Text style={styles.emptyText}>No subcategories found</Text>
+                            </View>
+                        )}
+                        showsVerticalScrollIndicator={false}
+                        ListFooterComponent={() => {
+                            const hasAnyGroupedChildren = selectedParent?.children.some(c => c.children.length > 0);
+                            const showBrandsSection = selectedParent?.show_brands;
+
+                            return (
+                                <View style={{ paddingBottom: 100 }}>
+                                    {!hasAnyGroupedChildren && (selectedParent?.children.length || 0) > 0 && (
+                                        <View style={styles.subGridFull}>
+                                            {selectedParent?.children.map(item => (
+                                                <TouchableOpacity
+                                                    key={item.id}
+                                                    style={styles.subItemFull}
+                                                    onPress={() => handleCategoryPress(item)}
+                                                >
+                                                    <View style={styles.subImageContainer}>
+                                                        <Image
+                                                            source={getImageSource(item)}
+                                                            style={styles.subImage}
+                                                            contentFit="contain"
+                                                        />
+                                                    </View>
+                                                    <Text style={styles.subText} numberOfLines={2}>
+                                                        {item.name}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
+                                    )}
+
+                                    {/* Brands Section (if enabled for this category) */}
+                                    {showBrandsSection && (
+                                        <View style={styles.brandsSection}>
+                                            <View style={styles.groupHeader}>
+                                                <Text style={styles.groupTitle}>Shop by Brand</Text>
+                                                <View style={styles.groupLine} />
+                                            </View>
+                                            {brandsLoading ? (
+                                                <ActivityIndicator size="small" color={Colors.primary} style={{ marginTop: 20 }} />
+                                            ) : (
+                                                <View style={styles.brandsGrid}>
+                                                    {brands.map((brand) => (
+                                                        <TouchableOpacity
+                                                            key={brand.id}
+                                                            style={styles.brandCard}
+                                                            onPress={() => handleBrandPress(brand)}
+                                                        >
+                                                            <View style={styles.brandImageContainer}>
+                                                                <Image
+                                                                    source={{ uri: brand.image || undefined }}
+                                                                    style={styles.brandImage}
+                                                                    contentFit="contain"
+                                                                />
+                                                            </View>
+                                                            <Text style={styles.brandName} numberOfLines={1}>{brand.name}</Text>
+                                                        </TouchableOpacity>
+                                                    ))}
+                                                </View>
+                                            )}
+                                        </View>
+                                    )}
+                                </View>
+                            );
+                        }}
+                    />
+                </View>
+            </View>
         </View>
     );
 }
+
+const SIDEBAR_WIDTH = 90;
 
 const styles = StyleSheet.create({
     container: {
@@ -296,14 +369,9 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     headerTitle: {
-        fontSize: FontSize.xxl,
+        fontSize: FontSize.xl,
         fontWeight: FontWeight.bold,
         color: Colors.text.primary,
-    },
-    headerSubtitle: {
-        fontSize: FontSize.sm,
-        color: Colors.text.tertiary,
-        marginTop: 2,
     },
     cartButton: {
         padding: Spacing.sm,
@@ -326,145 +394,203 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: FontWeight.bold,
     },
+    content: {
+        flex: 1,
+        flexDirection: 'row',
+    },
+    sidebar: {
+        width: SIDEBAR_WIDTH,
+        backgroundColor: '#F8F9FA',
+        borderRightWidth: 1,
+        borderRightColor: Colors.border.light,
+    },
+    sidebarItem: {
+        width: '100%',
+        paddingVertical: Spacing.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#F8F9FA',
+    },
+    sidebarItemActive: {
+        backgroundColor: Colors.background.surface,
+    },
+    activeIndicator: {
+        position: 'absolute',
+        left: 0,
+        top: '20%',
+        bottom: '20%',
+        width: 4,
+        backgroundColor: Colors.primary,
+        borderTopRightRadius: 4,
+        borderBottomRightRadius: 4,
+    },
+    sidebarIconContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#FFFFFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 4,
+        ...Shadows.sm,
+    },
+    sidebarIconActive: {
+        borderWidth: 1,
+        borderColor: Colors.primary,
+    },
+    sidebarIcon: {
+        width: 30,
+        height: 30,
+    },
+    sidebarText: {
+        fontSize: 11,
+        color: Colors.text.secondary,
+        textAlign: 'center',
+        fontWeight: FontWeight.medium,
+        paddingHorizontal: 4,
+    },
+    sidebarTextActive: {
+        color: Colors.primary,
+        fontWeight: FontWeight.bold,
+    },
+    rightPane: {
+        flex: 1,
+        backgroundColor: Colors.background.surface,
+    },
+    rightHeader: {
+        padding: Spacing.md,
+    },
+    rightHeaderTitle: {
+        fontSize: FontSize.lg,
+        fontWeight: FontWeight.bold,
+        color: Colors.text.primary,
+    },
+    groupContainer: {
+        marginBottom: Spacing.lg,
+        paddingHorizontal: Spacing.sm,
+    },
+    groupHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: Spacing.md,
+        paddingHorizontal: Spacing.sm,
+    },
+    groupTitle: {
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.bold,
+        color: Colors.text.primary,
+        marginRight: Spacing.sm,
+    },
+    groupLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: Colors.border.light,
+    },
+    subGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+    },
+    subItem: {
+        width: '33.33%',
+        alignItems: 'center',
+        marginBottom: Spacing.lg,
+    },
+    subItemContent: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+    },
+    subImageContainer: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#F8F9FA',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 8,
+    },
+    subImage: {
+        width: 40,
+        height: 40,
+    },
+    subText: {
+        fontSize: FontSize.xs,
+        color: Colors.text.primary,
+        textAlign: 'center',
+        fontWeight: FontWeight.medium,
+        paddingHorizontal: 2,
+    },
+    viewAllGrid: {
+        borderWidth: 1,
+        borderColor: Colors.border.light,
+        borderStyle: 'dashed',
+    },
+    subGridFull: {
+        padding: Spacing.sm,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+    },
+    subItemFull: {
+        width: '33.33%',
+        alignItems: 'center',
+        marginBottom: Spacing.lg,
+    },
+    subImageCircle: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: '#F8F9FA',
+        marginBottom: 8,
+    },
+    emptyContent: {
+        padding: 40,
+        alignItems: 'center',
+    },
+    emptyText: {
+        color: Colors.text.secondary,
+        fontSize: FontSize.md,
+    },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    loadingText: {
-        marginTop: Spacing.md,
-        fontSize: FontSize.md,
-        color: Colors.text.tertiary,
+    brandsSection: {
+        marginTop: Spacing.xl,
+        paddingHorizontal: Spacing.sm,
     },
-    listContent: {
-        padding: Spacing.md,
-        paddingBottom: 100,
+    brandsGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        paddingHorizontal: 4,
     },
-    columnWrapper: {
-        justifyContent: 'space-between',
+    brandCard: {
+        width: '33.33%',
+        alignItems: 'center',
+        marginBottom: Spacing.lg,
     },
-    parentCard: {
-        width: CARD_WIDTH,
-        height: CARD_WIDTH * 1.1,
-        borderRadius: BorderRadius.lg,
-        marginBottom: Spacing.md,
-        overflow: 'hidden',
-        ...Shadows.md,
+    brandImageContainer: {
+        width: 64,
+        height: 64,
+        borderRadius: 8,
+        backgroundColor: Colors.background.surface,
+        borderWidth: 1,
+        borderColor: Colors.border.light,
+        padding: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 8,
+        ...Shadows.sm,
     },
-    parentImage: {
+    brandImage: {
         width: '100%',
         height: '100%',
     },
-    iconContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    parentOverlay: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        padding: Spacing.md,
-    },
-    parentOverlayWithImage: {
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    parentName: {
-        fontSize: FontSize.lg,
-        fontWeight: FontWeight.bold,
-        color: Colors.text.inverse,
-    },
-    subcategoryBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: Spacing.xs,
-    },
-    subcategoryCount: {
+    brandName: {
         fontSize: FontSize.xs,
-        color: 'rgba(255,255,255,0.8)',
-        marginRight: 2,
-    },
-    // Subcategory View
-    subcategoryContainer: {
-        flex: 1,
-    },
-    breadcrumbHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.md,
-        backgroundColor: Colors.background.surface,
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.border.light,
-    },
-    backButton: {
-        padding: Spacing.xs,
-        marginRight: Spacing.sm,
-    },
-    breadcrumbText: {
-        flex: 1,
-    },
-    breadcrumbLabel: {
-        fontSize: FontSize.xs,
-        color: Colors.text.tertiary,
-    },
-    breadcrumbTitle: {
-        fontSize: FontSize.lg,
-        fontWeight: FontWeight.semibold,
         color: Colors.text.primary,
-    },
-    viewAllButton: {
-        paddingVertical: Spacing.xs,
-        paddingHorizontal: Spacing.md,
-        backgroundColor: Colors.primary,
-        borderRadius: BorderRadius.sm,
-    },
-    viewAllText: {
-        fontSize: FontSize.sm,
-        fontWeight: FontWeight.semibold,
-        color: Colors.text.primary,
-    },
-    subcategoryList: {
-        padding: Spacing.md,
-        paddingBottom: 100,
-    },
-    subcategoryCard: {
-        width: CARD_WIDTH,
-        backgroundColor: Colors.background.surface,
-        borderRadius: BorderRadius.md,
-        marginBottom: Spacing.md,
-        overflow: 'hidden',
-        ...Shadows.sm,
-    },
-    subcategoryImage: {
-        width: '100%',
-        height: CARD_WIDTH * 0.7,
-        backgroundColor: Colors.background.secondary,
-    },
-    subcategoryName: {
-        fontSize: FontSize.md,
-        fontWeight: FontWeight.medium,
-        color: Colors.text.primary,
-        padding: Spacing.sm,
         textAlign: 'center',
-    },
-    // Empty State
-    emptyState: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: 60,
-    },
-    emptyTitle: {
-        fontSize: FontSize.xl,
-        fontWeight: FontWeight.bold,
-        color: Colors.text.primary,
-        marginTop: Spacing.md,
-    },
-    emptySubtitle: {
-        fontSize: FontSize.md,
-        color: Colors.text.tertiary,
-        marginTop: Spacing.xs,
+        fontWeight: FontWeight.medium,
+        width: '90%',
     },
 });

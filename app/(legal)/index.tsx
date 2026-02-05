@@ -17,35 +17,35 @@ const LEGAL_LINKS = [
         id: 'privacy',
         title: 'Privacy Policy',
         icon: 'shield-check-outline',
-        url: 'https://www.horibol.com/privacy-policy',
+        route: '/privacy-policy',
         description: 'How we handle your data'
     },
     {
         id: 'terms',
         title: 'Terms & Conditions',
         icon: 'file-document-outline',
-        url: 'https://www.horibol.com/terms-and-conditions',
+        route: '/terms-and-conditions',
         description: 'Rules for using our service'
     },
     {
         id: 'refund',
         title: 'Refund & Return Policy',
         icon: 'cash-refund',
-        url: 'https://www.horibol.com/refund-and-return-policy',
+        route: '/refund-and-return-policy',
         description: 'Policies on returns and refunds'
     },
     {
         id: 'shipping',
         title: 'Shipping & Delivery',
         icon: 'truck-delivery-outline',
-        url: 'https://www.horibol.com/shipping-and-delivery-policy',
+        route: '/shipping-and-delivery-policy',
         description: 'Delivery timelines and charges'
     },
     {
         id: 'cancellation',
         title: 'Cancellation & Replacement',
         icon: 'close-circle-outline',
-        url: 'https://www.horibol.com/cancellation-and-replacement-policy',
+        route: '/cancellation-and-replacement-policy',
         description: 'Cancelling orders and replacements'
     },
     {
@@ -61,15 +61,19 @@ export default function LegalScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
 
-    const handleOpenLink = async (url: string) => {
-        try {
-            await WebBrowser.openBrowserAsync(url, {
-                toolbarColor: Colors.primary,
-                enableBarCollapsing: true,
-                showTitle: true,
-            });
-        } catch (error) {
-            console.error('Error opening legal link:', error);
+    const handlePress = async (link: typeof LEGAL_LINKS[0]) => {
+        if ('route' in link) {
+            router.push(link.route as any);
+        } else if ('url' in link) {
+            try {
+                await WebBrowser.openBrowserAsync(link.url, {
+                    toolbarColor: Colors.primary,
+                    enableBarCollapsing: true,
+                    showTitle: true,
+                });
+            } catch (error) {
+                console.error('Error opening legal link:', error);
+            }
         }
     };
 
@@ -105,7 +109,7 @@ export default function LegalScreen() {
                                 styles.menuItem,
                                 index === LEGAL_LINKS.length - 1 && styles.lastItem
                             ]}
-                            onPress={() => handleOpenLink(link.url)}
+                            onPress={() => handlePress(link)}
                             activeOpacity={0.6}
                         >
                             <View style={styles.menuItemLeft}>

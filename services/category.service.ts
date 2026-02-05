@@ -12,10 +12,11 @@ export interface Category {
     image: string | null;
     image_url: string | null;
     parent_id: number | null;
+    show_brands?: boolean;
 }
 
 export interface CategoryWithChildren extends Category {
-    children: Category[];
+    children: CategoryWithChildren[];
     productCount?: number;
 }
 
@@ -27,14 +28,13 @@ export const getCategories = async (): Promise<Category[]> => {
         const { data, error } = await supabase
             .from('category')
             .select('*')
-            .order('id', { ascending: true });
+            .order('sort_order', { ascending: true });
 
         if (error) {
             console.error('Error fetching categories:', error);
             return [];
         }
 
-        console.log('Fetched categories:', data?.length, 'items', data);
         return data || [];
     } catch (error) {
         console.error('Unexpected error fetching categories:', error);
@@ -49,17 +49,17 @@ export const getCategoriesWithHierarchy = async (): Promise<CategoryWithChildren
     try {
         const categories = await getCategories();
 
-        // Separate parent and child categories
-        const parentCategories = categories.filter(c => c.parent_id === null);
-        const childCategories = categories.filter(c => c.parent_id !== null);
+        // Helper function to build hierarchy recursively
+        const buildHierarchy = (parentId: number | null): CategoryWithChildren[] => {
+            return categories
+                .filter(c => c.parent_id === parentId)
+                .map(category => ({
+                    ...category,
+                    children: buildHierarchy(category.id)
+                }));
+        };
 
-        // Build hierarchy
-        const hierarchy: CategoryWithChildren[] = parentCategories.map(parent => ({
-            ...parent,
-            children: childCategories.filter(child => child.parent_id === parent.id)
-        }));
-
-        return hierarchy;
+        return buildHierarchy(null);
     } catch (error) {
         console.error('Error building category hierarchy:', error);
         return [];

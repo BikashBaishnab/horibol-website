@@ -110,7 +110,7 @@ export default function HomeScreen() {
 
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 
-            setCategories(catData);
+            setCategories(catData.filter(c => c.parent_id === null || c.parent_id === undefined));
             setHeroSlides(slideData);
             setHomeSections(sectionData);
             setProducts(productData);
