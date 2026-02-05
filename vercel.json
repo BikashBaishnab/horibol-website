@@ -1,7 +1,6 @@
 {
     "cleanUrls": true,
     "trailingSlash": false,
-    "framework": "expo",
     "rewrites": [
         {
             "source": "/(privacy-policy|terms-and-conditions|refund-and-return-policy|shipping-and-delivery-policy|cancellation-and-replacement-policy)",
