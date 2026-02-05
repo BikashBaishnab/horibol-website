@@ -1,16 +1,17 @@
-/**
- * Supabase Client
- * 
- * This file contains ONLY the Supabase client initialization.
- * All API functions have been moved to the services/ folder.
- * 
- * @example
- * import { supabase } from '@/lib/supabase';
- */
-
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Prevent build-time crash if variables are missing
+const isBuild = typeof window === 'undefined';
+if (!supabaseUrl || !supabaseKey) {
+    if (isBuild) {
+        console.warn('Supabase environment variables are missing during build. Using placeholders.');
+    }
+}
+
+export const supabase = createClient(
+    supabaseUrl || 'https://placeholder.supabase.co',
+    supabaseKey || 'placeholder'
+);
