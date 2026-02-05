@@ -19,14 +19,8 @@ import {
     UIManager,
     View,
 } from 'react-native';
+import ImageViewing from 'react-native-image-viewing';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-// Mock ImageViewing to avoid problematic import on web
-const ImageViewing = ({ visible, onRequestClose }: any) => {
-    React.useEffect(() => {
-        if (visible && Platform.OS === 'web') onRequestClose?.();
-    }, [visible]);
-    return null;
-};
 
 import DeliveryCheck from '../../components/ui/DeliveryCheck';
 import { useAuth } from '../../context/AuthContext';
