@@ -4,6 +4,10 @@
     "framework": "expo",
     "rewrites": [
         {
+            "source": "/(privacy-policy|terms-and-conditions|refund-and-return-policy|shipping-and-delivery-policy|cancellation-and-replacement-policy)",
+            "destination": "/legal/$1"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }
