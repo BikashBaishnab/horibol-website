@@ -17,35 +17,35 @@ const LEGAL_LINKS = [
         id: 'privacy',
         title: 'Privacy Policy',
         icon: 'shield-check-outline',
-        route: '/privacy-policy',
+        route: '/legal/privacy-policy',
         description: 'How we handle your data'
     },
     {
         id: 'terms',
         title: 'Terms & Conditions',
         icon: 'file-document-outline',
-        route: '/terms-and-conditions',
+        route: '/legal/terms-and-conditions',
         description: 'Rules for using our service'
     },
     {
         id: 'refund',
         title: 'Refund & Return Policy',
         icon: 'cash-refund',
-        route: '/refund-and-return-policy',
+        route: '/legal/refund-and-return-policy',
         description: 'Policies on returns and refunds'
     },
     {
         id: 'shipping',
         title: 'Shipping & Delivery',
         icon: 'truck-delivery-outline',
-        route: '/shipping-and-delivery-policy',
+        route: '/legal/shipping-and-delivery-policy',
         description: 'Delivery timelines and charges'
     },
     {
         id: 'cancellation',
         title: 'Cancellation & Replacement',
         icon: 'close-circle-outline',
-        route: '/cancellation-and-replacement-policy',
+        route: '/legal/cancellation-and-replacement-policy',
         description: 'Cancelling orders and replacements'
     },
     {
