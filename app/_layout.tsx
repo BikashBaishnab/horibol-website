@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import { PostHogProvider } from 'posthog-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
-import { AnimatedSplashScreen } from '../components/common';
+import { AnimatedSplashScreen, WebContainer } from '../components/common';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { ToastProvider } from '../context/ToastContext';
@@ -57,19 +57,21 @@ export default function RootLayout() {
         }
       }}
     >
-      <AuthProvider>
-        <UserLocationProvider>
-          <CartProvider>
-            <ToastProvider>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-                <Stack.Screen name="auth/otp" options={{ headerShown: false }} />
-              </Stack>
-            </ToastProvider>
-          </CartProvider>
-        </UserLocationProvider>
-      </AuthProvider>
+      <WebContainer>
+        <AuthProvider>
+          <UserLocationProvider>
+            <CartProvider>
+              <ToastProvider>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+                  <Stack.Screen name="auth/otp" options={{ headerShown: false }} />
+                </Stack>
+              </ToastProvider>
+            </CartProvider>
+          </UserLocationProvider>
+        </AuthProvider>
+      </WebContainer>
     </PostHogProvider>
   );
 }

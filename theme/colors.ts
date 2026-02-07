@@ -8,7 +8,7 @@
 export const Colors = {
     // Primary Brand Colors
     primary: '#FFD700',        // Gold - main brand color
-    primaryDark: '#FFA500',    // Orange - gradient/accent
+    primaryDark: '#E6C200',    // Dark Gold - instead of Orange
     primaryLight: '#FFF9E1',   // Very pale yellow for subtle backgrounds
 
     // Accent Colors

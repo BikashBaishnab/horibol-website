@@ -13,7 +13,6 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    Dimensions,
     FlatList,
     LayoutAnimation,
     RefreshControl,
@@ -21,14 +20,15 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    useWindowDimensions,
+    View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Theme & Components
-import { LoadingSpinner, ProductCard } from '../../components/common';
+import { DesktopHeader, LoadingSpinner, ProductCard } from '../../components/common';
 import SectionRenderer from '../../components/home/SectionRenderer';
-import { BorderRadius, Colors, FontSize, FontWeight, Shadows, Spacing } from '../../theme';
+import { BorderRadius, Colors, Dimensions, FontSize, FontWeight, Shadows, Spacing } from '../../theme';
 
 // Context
 import { useAuth } from '../../context/AuthContext';
@@ -40,7 +40,7 @@ import { getCategories, getHeroSlides, getProductsPaginated } from '../../servic
 import { addToWishlist, getWishlistProductIds, removeFromWishlist } from '../../services/wishlist.service';
 import type { Category, HeroSlide, HomeSection, Product } from '../../types';
 
-const { width } = Dimensions.get('window');
+// Static width removed - using useWindowDimensions inside components
 
 const CATEGORY_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
     'Mobiles': 'smartphone',
@@ -57,8 +57,21 @@ const DEFAULT_ICON = 'category';
 export default function HomeScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { width: windowWidth } = useWindowDimensions();
     const { user } = useAuth();
     const { showToast } = useToast();
+
+    // Responsive width calculation
+    const contentWidth = useMemo(() => {
+        return Math.min(windowWidth, Dimensions.webMaxWidth);
+    }, [windowWidth]);
+
+    // Responsive grid calculation
+    const numColumns = useMemo(() => {
+        if (contentWidth >= 1024) return 6;
+        if (contentWidth >= 768) return 4;
+        return 2;
+    }, [contentWidth]);
 
     const [logoError, setLogoError] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -203,17 +216,30 @@ export default function HomeScreen() {
 
     // Auto-scroll hero slider
     useEffect(() => {
-        if (heroSlides.length === 0) return;
+        if (heroSlides.length <= 1) return;
+
         const interval = setInterval(() => {
             let nextIndex = activeSlide + 1;
-            if (nextIndex >= heroSlides.length) nextIndex = 0;
+            const isDesktop = windowWidth >= 768;
+            const totalSlides = heroSlides.length;
+
+            // On desktop we show 2, so maybe we want to scroll by 1 still.
+            if (nextIndex >= totalSlides) nextIndex = 0;
+
             try {
-                flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+                flatListRef.current?.scrollToIndex({
+                    index: nextIndex,
+                    animated: true,
+                    viewPosition: 0
+                });
                 setActiveSlide(nextIndex);
-            } catch (e) { }
-        }, 3000);
+            } catch (e) {
+                // Ignore
+            }
+        }, 4000);
+
         return () => clearInterval(interval);
-    }, [activeSlide, heroSlides.length]);
+    }, [activeSlide, heroSlides.length, windowWidth]);
 
     const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: any[] }) => {
         if (viewableItems.length > 0) setActiveSlide(viewableItems[0].index ?? 0);
@@ -267,18 +293,35 @@ export default function HomeScreen() {
                         data={heroSlides}
                         keyExtractor={(item) => item.id.toString()}
                         horizontal
-                        pagingEnabled
+                        pagingEnabled={windowWidth < 768}
+                        snapToInterval={windowWidth >= 768 ? contentWidth / 2 : undefined}
+                        snapToAlignment="start"
                         showsHorizontalScrollIndicator={false}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity activeOpacity={0.9} style={styles.slideItem}>
-                                <Image
-                                    source={{ uri: item.slider_image }}
-                                    style={styles.slideImage}
-                                    contentFit="cover"
-                                    cachePolicy="disk"
-                                />
-                            </TouchableOpacity>
-                        )}
+                        getItemLayout={(_, index) => {
+                            const slideWidth = windowWidth >= 768 ? contentWidth / 2 : contentWidth;
+                            return {
+                                length: slideWidth,
+                                offset: slideWidth * index,
+                                index,
+                            };
+                        }}
+                        renderItem={({ item }) => {
+                            const isDesktop = windowWidth >= 768;
+                            const slideWidth = isDesktop ? contentWidth / 2 : contentWidth;
+                            return (
+                                <TouchableOpacity
+                                    activeOpacity={0.9}
+                                    style={[styles.slideItem, { width: slideWidth }]}
+                                >
+                                    <Image
+                                        source={{ uri: item.slider_image }}
+                                        style={[styles.slideImage, { width: slideWidth - (isDesktop ? 12 : 20) }]}
+                                        contentFit="cover"
+                                        cachePolicy="disk"
+                                    />
+                                </TouchableOpacity>
+                            );
+                        }}
                         onViewableItemsChanged={onViewableItemsChanged}
                         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
                     />
@@ -333,49 +376,53 @@ export default function HomeScreen() {
         <View style={styles.mainContainer}>
             <StatusBar style="dark" translucent backgroundColor="transparent" />
 
-            {/* Header */}
-            <LinearGradient
-                colors={['#FFDF40', '#FFFFFF']} // Semi-light brand yellow to White
-                style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}
-            >
-                <View style={styles.headerRow}>
-                    <TouchableOpacity
-                        style={styles.logoContainer}
-                        onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
-                        activeOpacity={0.8}
-                    >
-                        {logoError ? (
-                            <View style={styles.logoFallback}>
-                                <Text style={styles.logoText}>H</Text>
-                            </View>
-                        ) : (
-                            <Image
-                                source={require('../../assets/images/horibol_logo.png')}
-                                style={styles.logo}
-                                onError={() => setLogoError(true)}
-                                contentFit="contain"
-                                cachePolicy="memory-disk"
-                            />
-                        )}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.searchContainer}
-                        onPress={() => router.push('/search')}
-                        activeOpacity={0.9}
-                    >
-                        <Ionicons name="search" size={20} color={Colors.text.placeholder} style={styles.searchIcon} />
-                        <Text style={styles.searchText}>{placeholders[placeholderIndex]}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.notificationIconBtn}
-                        onPress={() => router.push('/notifications')}
-                        activeOpacity={0.7}
-                    >
-                        <Ionicons name="notifications-outline" size={26} color={Colors.text.primary} />
-                        <View style={styles.notificationBadge} />
-                    </TouchableOpacity>
-                </View>
-            </LinearGradient>
+            {/* Headers */}
+            {windowWidth >= 768 ? (
+                <DesktopHeader />
+            ) : (
+                <LinearGradient
+                    colors={['#FFDF40', '#FFFFFF']} // Semi-light brand yellow to White
+                    style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}
+                >
+                    <View style={styles.headerRow}>
+                        <TouchableOpacity
+                            style={styles.logoContainer}
+                            onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
+                            activeOpacity={0.8}
+                        >
+                            {logoError ? (
+                                <View style={styles.logoFallback}>
+                                    <Text style={styles.logoText}>H</Text>
+                                </View>
+                            ) : (
+                                <Image
+                                    source={require('../../assets/images/horibol_logo.png')}
+                                    style={styles.logo}
+                                    onError={() => setLogoError(true)}
+                                    contentFit="contain"
+                                    cachePolicy="memory-disk"
+                                />
+                            )}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.searchContainer}
+                            onPress={() => router.push('/search')}
+                            activeOpacity={0.9}
+                        >
+                            <Ionicons name="search" size={20} color={Colors.text.placeholder} style={styles.searchIcon} />
+                            <Text style={styles.searchText}>{placeholders[placeholderIndex]}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.notificationIconBtn}
+                            onPress={() => router.push('/notifications')}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="notifications-outline" size={26} color={Colors.text.primary} />
+                            <View style={styles.notificationBadge} />
+                        </TouchableOpacity>
+                    </View>
+                </LinearGradient>
+            )}
 
             {loading ? (
                 <View style={styles.centerContainer}>
@@ -383,9 +430,10 @@ export default function HomeScreen() {
                 </View>
             ) : (
                 <FlatList
+                    key={numColumns} // Force re-render when column count changes
                     data={products}
                     keyExtractor={(item, index) => `${item.product_id}-${index}`}
-                    numColumns={2}
+                    numColumns={numColumns}
                     renderItem={renderItem}
                     ListHeaderComponent={renderHeaderContent}
                     ListFooterComponent={renderFooter}
@@ -395,7 +443,7 @@ export default function HomeScreen() {
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
                     }
                     contentContainerStyle={styles.scrollContent}
-                    columnWrapperStyle={styles.columnWrapper}
+                    columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
                 />
             )}
         </View>
@@ -525,15 +573,11 @@ const styles = StyleSheet.create({
         paddingBottom: Spacing.sm
     },
     slideItem: {
-        width: width,
-        height: 180,
         justifyContent: 'center',
         alignItems: 'center'
     },
     slideImage: {
-        width: width - 20,
         height: 170,
-        borderRadius: BorderRadius.md
     },
     dotsContainer: {
         flexDirection: 'row',

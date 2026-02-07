@@ -108,4 +108,6 @@ export const Dimensions = {
         md: 50,
         lg: 80,
     },
+    /** Max width for content on web platform */
+    webMaxWidth: 1080,
 } as const;

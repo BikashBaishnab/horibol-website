@@ -56,13 +56,13 @@ const BannerSection: React.FC<BannerSectionProps> = React.memo(({ items }) => {
 
 const styles = StyleSheet.create({
     container: {
-        width: SCREEN_WIDTH,
+        width: '100%',
         paddingHorizontal: Spacing.md,
         marginBottom: Spacing.sm,
     },
     touchable: {
         width: '100%',
-        height: 160,
+        height: 180, // Slightly taller for better visibility
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
     },

@@ -1,10 +1,13 @@
-import { Ionicons } from '@expo/vector-icons'; // Added Ionicons
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { useCart } from '../../context/CartContext'; // <--- 1. IMPORT HOOK
+import { useWindowDimensions } from 'react-native';
+import { useCart } from '../../context/CartContext';
 
 export default function TabLayout() {
-  const { cartCount } = useCart(); // <--- 2. GET LIVE COUNT
+  const { cartCount } = useCart();
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktop = windowWidth >= 768;
 
   return (
     <Tabs
@@ -12,6 +15,9 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: '#FFD700',
         tabBarInactiveTintColor: 'gray',
+        tabBarStyle: {
+          display: isDesktop ? 'none' : 'flex',
+        },
       }}
     >
       <Tabs.Screen

@@ -10,7 +10,7 @@ interface SDUICardProps {
     width?: number | string;
 }
 
-const SDUICard: React.FC<SDUICardProps> = React.memo(({ item, width = 120 }) => {
+const SDUICard: React.FC<SDUICardProps> = React.memo(({ item, width = '100%' }) => {
     const router = useRouter();
 
     const handlePress = () => {

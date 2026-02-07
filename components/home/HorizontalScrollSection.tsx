@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { Spacing } from '../../theme';
 import type { HomeSectionItem } from '../../types';
 import SDUICard from './SDUICard';
@@ -9,6 +9,10 @@ interface HorizontalScrollSectionProps {
 }
 
 const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = React.memo(({ items }) => {
+    const { width: windowWidth } = useWindowDimensions();
+    const isDesktop = windowWidth >= 768;
+    const cardWidth = isDesktop ? 180 : 130;
+
     return (
         <ScrollView
             horizontal
@@ -19,7 +23,7 @@ const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = React.me
                 <SDUICard
                     key={item.id}
                     item={item}
-                    width={130}
+                    width={cardWidth}
                 />
             ))}
         </ScrollView>

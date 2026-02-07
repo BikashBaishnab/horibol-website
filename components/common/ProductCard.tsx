@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import {
     Dimensions,
+    Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -114,10 +115,12 @@ export default ProductCard;
 
 const styles = StyleSheet.create({
     card: {
-        width: (width - (Spacing.md * 3)) / 2, // (Screen - (3 * 16px gutter)) / 2
+        flex: 1,
+        maxWidth: Platform.OS === 'web' ? 220 : '50%', // Cap width on web
         backgroundColor: Colors.background.surface,
         borderRadius: BorderRadius.xl,
         marginBottom: Spacing.md,
+        marginHorizontal: Spacing.xs, // Add horizontal margin for grid spacing
         paddingBottom: Spacing.sm,
         overflow: 'hidden',
         borderWidth: 1,

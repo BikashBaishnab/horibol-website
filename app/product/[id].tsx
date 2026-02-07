@@ -5,7 +5,6 @@ import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    Dimensions,
     FlatList,
     LayoutAnimation,
     Platform,
@@ -17,7 +16,8 @@ import {
     Text,
     TouchableOpacity,
     UIManager,
-    View,
+    useWindowDimensions,
+    View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // Mock ImageViewing to avoid problematic import on web
@@ -36,12 +36,13 @@ import { checkItemInCart } from '../../services/cart.service';
 import { getProductDetail } from '../../services/product.service';
 import { getProductReviews, getReviewStats, Review, ReviewStats } from '../../services/review.service';
 import { addToWishlist, isInWishlist, removeFromWishlist } from '../../services/wishlist.service';
+import { Dimensions } from '../../theme';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const { width } = Dimensions.get('window');
+// Static width removed - using useWindowDimensions inside components
 
 const CollapsibleSection = ({ title, children, defaultOpen = false }: { title: string, children: React.ReactNode, defaultOpen?: boolean }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -66,6 +67,7 @@ export default function ProductDetails() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { width: windowWidth } = useWindowDimensions();
     const { refreshCartCount, addToCart } = useCart();
     const { showToast } = useToast();
     const flatListRef = React.useRef<FlatList>(null);
@@ -175,7 +177,19 @@ export default function ProductDetails() {
                 title: productName,
             });
         } catch (error) {
-            console.error('Share error:', error);
+        }
+    };
+
+    const handleBuyNow = () => {
+        if (selected && selected.variant_id) {
+            router.push({
+                pathname: '/order-summary',
+                params: {
+                    isBuyNow: 'true',
+                    variantId: selected.variant_id,
+                    qty: 1
+                }
+            });
         }
     };
 
@@ -252,6 +266,10 @@ export default function ProductDetails() {
         </View>
     );
 
+    const isDesktop = windowWidth >= 768;
+    const contentWidth = Math.min(windowWidth, Dimensions.webMaxWidth);
+    const carouselWidth = isDesktop ? contentWidth * 0.45 : windowWidth;
+
     return (
         <View style={{ flex: 1, backgroundColor: '#f1f2f4' }}>
             <RNStatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -259,179 +277,214 @@ export default function ProductDetails() {
             {renderHeader()}
 
             <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-                <View style={{ backgroundColor: '#fff' }}>
-                    <View style={styles.carouselContainer}>
-                        <FlatList
-                            ref={flatListRef}
-                            key={`carousel-${selected.variant_id}`}
-                            data={images || []}
-                            horizontal
-                            pagingEnabled
-                            showsHorizontalScrollIndicator={false}
-                            keyExtractor={(item, index) => index.toString()}
-                            renderItem={({ item, index }) => (
-                                <Pressable
-                                    onPress={() => { setCurrentImageIndex(index); setIsVisible(true); }}
-                                    style={[styles.imageWrapper, { overflow: 'hidden' }]}
-                                >
-                                    <Image
-                                        source={{ uri: item }}
-                                        style={styles.mainImage}
-                                        contentFit="contain"
-                                        cachePolicy="disk"
-                                        transition={300}
-                                    />
-                                </Pressable>
-                            )}
-                            onScroll={(e) => {
-                                const x = e.nativeEvent.contentOffset.x;
-                                const index = Math.round(x / width);
-                                if (index !== activeImageIndex) {
-                                    setActiveImageIndex(index);
-                                }
-                            }}
-                            scrollEventThrottle={16}
-                        />
-
-                        {/* Modern Line-based Indicators */}
-                        {images && images.length > 1 && (
-                            <View style={styles.paginationWrapper}>
-                                {images.map((_: any, i: number) => (
-                                    <View
-                                        key={i}
-                                        style={[
-                                            styles.paginationLine,
-                                            activeImageIndex === i && styles.paginationLineActive
-                                        ]}
-                                    />
-                                ))}
-                            </View>
-                        )}
-
-                        {/* Wishlist & Share Icons Overlay */}
-                        <View style={styles.actionIconsOverlay}>
-                            <TouchableOpacity
-                                style={styles.actionIconButton}
-                                onPress={handleWishlistToggle}
-                                disabled={wishlistLoading}
-                            >
-                                {wishlistLoading ? (
-                                    <ActivityIndicator size="small" color="#FF6B6B" />
-                                ) : (
-                                    <Ionicons
-                                        name={isWishlisted ? 'heart' : 'heart-outline'}
-                                        size={24}
-                                        color={isWishlisted ? '#FF6B6B' : '#666'}
-                                    />
+                <View style={[isDesktop ? styles.productRow : styles.mobileFull, { backgroundColor: '#fff' }]}>
+                    <View style={isDesktop ? { width: carouselWidth } : styles.mobileFull}>
+                        <View style={[styles.carouselContainer, isDesktop && { height: 500 }]}>
+                            <FlatList
+                                ref={flatListRef}
+                                key={`carousel-${selected.variant_id}-${isDesktop}`}
+                                data={images || []}
+                                horizontal
+                                pagingEnabled
+                                showsHorizontalScrollIndicator={false}
+                                keyExtractor={(item, index) => `${index}-${item}`}
+                                getItemLayout={(_, index) => ({
+                                    length: carouselWidth,
+                                    offset: carouselWidth * index,
+                                    index,
+                                })}
+                                renderItem={({ item, index }) => (
+                                    <Pressable
+                                        onPress={() => { setCurrentImageIndex(index); setIsVisible(true); }}
+                                        style={[styles.imageWrapper, { width: carouselWidth, height: isDesktop ? 480 : 380, overflow: 'hidden' }]}
+                                    >
+                                        <Image
+                                            source={{ uri: item }}
+                                            style={{ width: '100%', height: '100%' }}
+                                            contentFit="contain"
+                                            cachePolicy="disk"
+                                            transition={300}
+                                        />
+                                    </Pressable>
                                 )}
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.actionIconButton}
-                                onPress={handleShare}
-                            >
-                                <Ionicons name="share-social-outline" size={22} color="#666" />
-                            </TouchableOpacity>
+                                onScroll={(e) => {
+                                    const x = e.nativeEvent.contentOffset.x;
+                                    const index = Math.round(x / carouselWidth);
+                                    if (index !== activeImageIndex) {
+                                        setActiveImageIndex(index);
+                                    }
+                                }}
+                                scrollEventThrottle={16}
+                            />
+
+                            {/* Modern Line-based Indicators */}
+                            {images && images.length > 1 && (
+                                <View style={styles.paginationWrapper}>
+                                    {images.map((_: any, i: number) => (
+                                        <View
+                                            key={i}
+                                            style={[
+                                                styles.paginationLine,
+                                                activeImageIndex === i && styles.paginationLineActive
+                                            ]}
+                                        />
+                                    ))}
+                                </View>
+                            )}
+
+                            {/* Wishlist & Share Icons Overlay */}
+                            <View style={styles.actionIconsOverlay}>
+                                <TouchableOpacity
+                                    style={styles.actionIconButton}
+                                    onPress={handleWishlistToggle}
+                                    disabled={wishlistLoading}
+                                >
+                                    {wishlistLoading ? (
+                                        <ActivityIndicator size="small" color="#FF6B6B" />
+                                    ) : (
+                                        <Ionicons
+                                            name={isWishlisted ? 'heart' : 'heart-outline'}
+                                            size={24}
+                                            color={isWishlisted ? '#FF6B6B' : '#666'}
+                                        />
+                                    )}
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.actionIconButton}
+                                    onPress={handleShare}
+                                >
+                                    <Ionicons name="share-social-outline" size={22} color="#666" />
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
 
-                    <View style={styles.infoContainer}>
-                        {selected.attributes?.colour ? (
-                            <Text style={styles.selectedColorText}>
-                                Selected Colour: <Text style={{ fontWeight: 'bold', color: 'black' }}>{selected.attributes.colour}</Text>
-                            </Text>
-                        ) : null}
+                    <View style={isDesktop ? styles.desktopInfo : styles.mobileFull}>
+                        <View style={styles.infoContainer}>
+                            {selected.attributes?.colour ? (
+                                <Text style={styles.selectedColorText}>
+                                    Selected Colour: <Text style={{ fontWeight: 'bold', color: 'black' }}>{selected.attributes.colour}</Text>
+                                </Text>
+                            ) : null}
 
-                        {colours && colours.length > 0 ? (
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selectorScroll}>
-                                {colours.map((c: any, index: number) => {
-                                    const variantColour = c.attributes?.colour;
-                                    const isActive = variantColour === selected.attributes?.colour;
-                                    return (
-                                        <TouchableOpacity
-                                            key={index}
-                                            onPress={() => handleColorSelect(c.variant_id)}
-                                            style={[styles.colorChip, isActive && styles.colorChipSelected]}
-                                        >
-                                            <Image
-                                                source={{ uri: c.image }}
-                                                style={styles.colorChipImage}
-                                                contentFit="contain"
-                                                cachePolicy="disk"
-                                            />
-                                            {variantColour && <Text style={styles.colorChipText}>{variantColour}</Text>}
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </ScrollView>
-                        ) : null}
-
-                        {options && options.length > 0 ? (
-                            <View style={{ marginTop: 20 }}>
-                                <Text style={styles.sectionLabel}>Variant: <Text style={{ fontWeight: 'bold' }}>{optLabel}</Text></Text>
-                                <View style={styles.optionsGrid}>
-                                    {options.map((opt: any, index: number) => {
-                                        const isActive = opt.variant_id === selected.variant_id || opt.variant_id === selected.id;
-                                        const optAttributes = opt.attributes
-                                            ? [opt.attributes.ram, opt.attributes.storage].filter(Boolean).join(' + ')
-                                            : '';
-
+                            {colours && colours.length > 0 ? (
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selectorScroll}>
+                                    {colours.map((c: any, index: number) => {
+                                        const variantColour = c.attributes?.colour;
+                                        const isActive = variantColour === selected.attributes?.colour;
                                         return (
                                             <TouchableOpacity
                                                 key={index}
-                                                onPress={() => handleOptionSelect(opt.variant_id)}
-                                                disabled={!opt.in_stock}
-                                                style={[styles.optionBox, isActive && styles.optionBoxSelected, !opt.in_stock && styles.optionBoxDisabled]}
+                                                onPress={() => handleColorSelect(c.variant_id)}
+                                                style={[styles.colorChip, isActive && styles.colorChipSelected]}
                                             >
-                                                <Text style={styles.optionTitle}>{optAttributes || 'Standard'}</Text>
-                                                <Text style={styles.optionPrice}>₹{opt.price}</Text>
-                                                {opt.in_stock ? (
-                                                    opt.discount_percentage > 0 ? (
-                                                        <Text style={styles.optionDiscount}>{opt.discount_percentage}% Off</Text>
-                                                    ) : null
-                                                ) : (
-                                                    <Text style={styles.outOfStockText}>Out of stock</Text>
-                                                )}
+                                                <Image
+                                                    source={{ uri: c.image }}
+                                                    style={styles.colorChipImage}
+                                                    contentFit="contain"
+                                                    cachePolicy="disk"
+                                                />
+                                                {variantColour && <Text style={styles.colorChipText}>{variantColour}</Text>}
                                             </TouchableOpacity>
                                         );
                                     })}
+                                </ScrollView>
+                            ) : null}
+
+                            {options && options.length > 0 ? (
+                                <View style={{ marginTop: 20 }}>
+                                    <Text style={styles.sectionLabel}>Variant: <Text style={{ fontWeight: 'bold' }}>{optLabel}</Text></Text>
+                                    <View style={styles.optionsGrid}>
+                                        {options.map((opt: any, index: number) => {
+                                            const isActive = opt.variant_id === selected.variant_id || opt.variant_id === selected.id;
+                                            const optAttributes = opt.attributes
+                                                ? [opt.attributes.ram, opt.attributes.storage].filter(Boolean).join(' + ')
+                                                : '';
+
+                                            return (
+                                                <TouchableOpacity
+                                                    key={index}
+                                                    onPress={() => handleOptionSelect(opt.variant_id)}
+                                                    disabled={!opt.in_stock}
+                                                    style={[styles.optionBox, isActive && styles.optionBoxSelected, !opt.in_stock && styles.optionBoxDisabled]}
+                                                >
+                                                    <Text style={styles.optionTitle}>{optAttributes || 'Standard'}</Text>
+                                                    <Text style={styles.optionPrice}>₹{opt.price}</Text>
+                                                    {opt.in_stock ? (
+                                                        opt.discount_percentage > 0 ? (
+                                                            <Text style={styles.optionDiscount}>{opt.discount_percentage}% Off</Text>
+                                                        ) : null
+                                                    ) : (
+                                                        <Text style={styles.outOfStockText}>Out of stock</Text>
+                                                    )}
+                                                </TouchableOpacity>
+                                            );
+                                        })}
+                                    </View>
+                                </View>
+                            ) : null}
+
+                            <View style={styles.mainInfoBlock}>
+                                <Text style={styles.brandTitle}>{data.brand_name || data.brand?.name}</Text>
+                                <Text style={styles.productName}>{dynamicProductName}</Text>
+                                <View style={styles.priceRow}>
+                                    <View>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                            <Text style={styles.bigDiscount}>{selected.discount_percentage}% OFF</Text>
+                                            <Text style={styles.mrpText}>MRP: {selected.mrp}</Text>
+                                        </View>
+                                        <Text style={styles.finalPrice}>₹{selected.price}</Text>
+                                    </View>
                                 </View>
 
-                            </View>
-                        ) : null}
-
-                        <View style={styles.mainInfoBlock}>
-                            <Text style={styles.brandTitle}>{data.brand_name || data.brand?.name}</Text>
-                            <Text style={styles.productName}>{dynamicProductName}</Text>
-                            <View style={styles.priceRow}>
-                                <Text style={styles.bigDiscount}>{selected.discount_percentage}% OFF</Text>
-                                <Text style={styles.mrpText}>MRP: {selected.mrp}</Text>
-                                <Text style={styles.finalPrice}>₹{selected.price}</Text>
+                                {isDesktop && (
+                                    <View style={styles.desktopActions}>
+                                        <TouchableOpacity
+                                            style={[styles.amazonButton, styles.amazonCartButton, isInCart && { backgroundColor: '#eaffea', borderColor: '#4caf50' }]}
+                                            disabled={isOutOfStock || addingToCart}
+                                            onPress={handleAddToCart}
+                                        >
+                                            {addingToCart ? (
+                                                <ActivityIndicator size="small" color="#000" />
+                                            ) : (
+                                                <Text style={styles.amazonButtonText}>{isInCart ? 'In Cart' : 'Add to Cart'}</Text>
+                                            )}
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.amazonButton, styles.amazonBuyButton]}
+                                            disabled={isOutOfStock}
+                                            onPress={handleBuyNow}
+                                        >
+                                            <Text style={styles.amazonButtonText}>Buy Now</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
                             </View>
                         </View>
+
+                        {/* Simple Offers Banner */}
+                        <TouchableOpacity
+                            style={{
+                                marginHorizontal: 16,
+                                marginBottom: 16,
+                                padding: 12,
+                                backgroundColor: '#FFF8E1',
+                                borderRadius: 8,
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                            }}
+                            activeOpacity={0.7}
+                        >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                <Ionicons name="pricetag" size={18} color="#F59E0B" />
+                                <Text style={{ color: '#92400E', fontSize: 13, fontWeight: '500' }}>
+                                    Bank offers available at checkout
+                                </Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={16} color="#92400E" />
+                        </TouchableOpacity>
                     </View>
-
-                    {/* Simple Offers Banner */}
-                    <TouchableOpacity
-                        style={{
-                            marginHorizontal: 16,
-                            marginBottom: 16,
-                            padding: 12,
-                            backgroundColor: '#FFF8E1',
-                            borderRadius: 8,
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                        }}
-                        activeOpacity={0.7}
-                    >
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                            <Ionicons name="pricetag" size={18} color="#F59E0B" />
-                            <Text style={{ color: '#92400E', fontSize: 13, fontWeight: '500' }}>
-                                Bank offers available at checkout
-                            </Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={16} color="#92400E" />
-                    </TouchableOpacity>
                 </View>
 
                 <DeliveryCheck
@@ -442,76 +495,82 @@ export default function ProductDetails() {
                     isCod={data.is_cod ?? selected.is_cod}
                 />
 
-                {highlightsData && (Array.isArray(highlightsData) ? highlightsData.length > 0 : Object.keys(highlightsData).length > 0) && (
-                    <CollapsibleSection title="Product Highlights" defaultOpen={true}>
-                        <View style={styles.highlightContainer}>
-                            {Array.isArray(highlightsData) ? highlightsData.map((item: any, index: number) => {
-                                const label = item.key || item.label;
-                                const value = item.value;
-                                return (
-                                    <View key={index} style={styles.highlightRow}>
-                                        {label && <Text style={styles.highlightLabel}>{label}</Text>}
-                                        <Text style={styles.highlightValue}>{String(value || item)}</Text>
-                                    </View>
-                                )
-                            }) : Object.entries(highlightsData).map(([key, value], index) => (
-                                <View key={index} style={styles.highlightRow}>
-                                    <Text style={styles.highlightLabel}>{key}</Text>
-                                    <Text style={styles.highlightValue}>{String(value)}</Text>
-                                </View>
-                            ))}
-                        </View>
-                    </CollapsibleSection>
-                )}
-
-                {descriptionData ? (
-                    <CollapsibleSection title="Specifications" defaultOpen={false}>
-                        {isComplexSpec ? (
-                            <View>
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll}>
-                                    {descriptionData.map((cat: any, index: number) => (
-                                        <TouchableOpacity
-                                            key={index}
-                                            style={[styles.tabItem, activeSpecTab === cat.title && styles.activeTabItem]}
-                                            onPress={() => setActiveSpecTab(cat.title)}
-                                        >
-                                            <Text style={[styles.tabText, activeSpecTab === cat.title && styles.activeTabText]}>
-                                                {cat.title}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </ScrollView>
-                                <View style={styles.specsTable}>
-                                    {activeSpecData.map((row: any, idx: number) => (
-                                        <View key={idx} style={styles.specRow}>
-                                            <Text style={styles.specLabel}>{row.label}</Text>
-                                            <Text style={styles.specValue}>{row.value}</Text>
+                <View style={isDesktop && styles.productRow}>
+                    <View style={isDesktop ? { flex: 1.5 } : styles.mobileFull}>
+                        {highlightsData && (Array.isArray(highlightsData) ? highlightsData.length > 0 : Object.keys(highlightsData).length > 0) && (
+                            <CollapsibleSection title="Product Highlights" defaultOpen={true}>
+                                <View style={styles.highlightContainer}>
+                                    {Array.isArray(highlightsData) ? highlightsData.map((item: any, index: number) => {
+                                        const label = item.key || item.label;
+                                        const value = item.value;
+                                        return (
+                                            <View key={index} style={styles.highlightRow}>
+                                                {label && <Text style={styles.highlightLabel}>{label}</Text>}
+                                                <Text style={styles.highlightValue}>{String(value || item)}</Text>
+                                            </View>
+                                        )
+                                    }) : Object.entries(highlightsData).map(([key, value], index) => (
+                                        <View key={index} style={styles.highlightRow}>
+                                            <Text style={styles.highlightLabel}>{key}</Text>
+                                            <Text style={styles.highlightValue}>{String(value)}</Text>
                                         </View>
                                     ))}
                                 </View>
-                            </View>
-                        ) : isObjectSpec ? (
-                            <View style={styles.specsTable}>
-                                {Object.entries(descriptionData).map(([key, value], idx) => (
-                                    <View key={idx} style={styles.specRow}>
-                                        <Text style={styles.specLabel}>{key}</Text>
-                                        <Text style={styles.specValue}>{typeof value === 'object' ? JSON.stringify(value) : String(value)}</Text>
-                                    </View>
-                                ))}
-                            </View>
-                        ) : (
-                            <View>
-                                {Array.isArray(descriptionData) ? (
-                                    descriptionData.map((para: any, index: number) => (
-                                        <Text key={index} style={styles.descriptionText}>{String(para)}</Text>
-                                    ))
-                                ) : (
-                                    <Text style={styles.descriptionText}>{String(descriptionData)}</Text>
-                                )}
-                            </View>
+                            </CollapsibleSection>
                         )}
-                    </CollapsibleSection>
-                ) : null}
+                    </View>
+
+                    <View style={isDesktop ? { flex: 2 } : styles.mobileFull}>
+                        {descriptionData ? (
+                            <CollapsibleSection title="Specifications" defaultOpen={isDesktop}>
+                                {isComplexSpec ? (
+                                    <View>
+                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll}>
+                                            {descriptionData.map((cat: any, index: number) => (
+                                                <TouchableOpacity
+                                                    key={index}
+                                                    style={[styles.tabItem, activeSpecTab === cat.title && styles.activeTabItem]}
+                                                    onPress={() => setActiveSpecTab(cat.title)}
+                                                >
+                                                    <Text style={[styles.tabText, activeSpecTab === cat.title && styles.activeTabText]}>
+                                                        {cat.title}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </ScrollView>
+                                        <View style={styles.specsTable}>
+                                            {activeSpecData.map((row: any, idx: number) => (
+                                                <View key={idx} style={styles.specRow}>
+                                                    <Text style={styles.specLabel}>{row.label}</Text>
+                                                    <Text style={styles.specValue}>{row.value}</Text>
+                                                </View>
+                                            ))}
+                                        </View>
+                                    </View>
+                                ) : isObjectSpec ? (
+                                    <View style={styles.specsTable}>
+                                        {Object.entries(descriptionData).map(([key, value], idx) => (
+                                            <View key={idx} style={styles.specRow}>
+                                                <Text style={styles.specLabel}>{key}</Text>
+                                                <Text style={styles.specValue}>{typeof value === 'object' ? JSON.stringify(value) : String(value)}</Text>
+                                            </View>
+                                        ))}
+                                    </View>
+                                ) : (
+                                    <View>
+                                        {Array.isArray(descriptionData) ? (
+                                            descriptionData.map((para: any, index: number) => (
+                                                <Text key={index} style={styles.descriptionText}>{String(para)}</Text>
+                                            ))
+                                        ) : (
+                                            <Text style={styles.descriptionText}>{String(descriptionData)}</Text>
+                                        )}
+                                    </View>
+                                )}
+                            </CollapsibleSection>
+                        ) : null}
+                    </View>
+                </View>
 
                 {/* Reviews Section */}
                 <CollapsibleSection title="Ratings & Reviews" defaultOpen={false}>
@@ -592,37 +651,33 @@ export default function ProductDetails() {
                 </CollapsibleSection>
             </ScrollView>
 
-            <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 10 }]}>
-                <TouchableOpacity
-                    style={[styles.cartButton, isInCart && { backgroundColor: '#eaffea', borderColor: '#4caf50' }]}
-                    disabled={isOutOfStock || addingToCart}
-                    onPress={handleAddToCart}
-                >
-                    {addingToCart ? <ActivityIndicator color="#000" /> : <Text style={[styles.cartButtonText, isInCart && { color: '#2e7d32' }]}>{isInCart ? 'Go to Cart' : 'Add to cart'}</Text>}
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.cartButton, styles.buyButton, isOutOfStock && styles.disabledButton]}
-                    disabled={isOutOfStock}
-                    onPress={() => {
-                        // ✅ Navigate to Order Summary in "Buy Now" mode
-                        if (selected && selected.variant_id) {
-                            router.push({
-                                pathname: '/order-summary',
-                                params: {
-                                    isBuyNow: 'true',
-                                    variantId: selected.variant_id,
-                                    qty: 1
-                                }
-                            });
-                        }
-                    }}
-                >
-                    <Text style={styles.buyButtonText}>{isOutOfStock ? 'Out of Stock' : 'Buy Now'}</Text>
-                </TouchableOpacity>
-            </View>
+            {!isDesktop && (
+                <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 10, alignSelf: 'center', maxWidth: Dimensions.webMaxWidth }]}>
+                    <TouchableOpacity
+                        style={[styles.cartButton, isInCart && { backgroundColor: '#eaffea', borderColor: '#4caf50' }]}
+                        disabled={isOutOfStock || addingToCart}
+                        onPress={handleAddToCart}
+                    >
+                        {addingToCart ? (
+                            <ActivityIndicator size="small" color="#000" />
+                        ) : (
+                            <Text style={styles.cartButtonText}>{isInCart ? 'In Cart' : 'Add to Cart'}</Text>
+                        )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.amazonBuyButton, styles.cartButton, isOutOfStock && styles.disabledButton]}
+                        disabled={isOutOfStock}
+                        onPress={handleBuyNow}
+                    >
+                        <Text style={[styles.buyButtonText, isOutOfStock && { color: '#666' }]}>
+                            {isOutOfStock ? 'Out of Stock' : 'Buy Now'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             <ImageViewing
-                images={footerImages}
+                images={images || []}
                 imageIndex={currentImageIndex}
                 visible={isVisible}
                 backgroundColor="#FFFFFF"
@@ -650,7 +705,7 @@ const styles = StyleSheet.create({
     searchIcon: { marginRight: 8 },
     searchText: { color: '#888', fontSize: 14 },
     carouselContainer: { height: 400, backgroundColor: '#fff', position: 'relative' as const },
-    imageWrapper: { width: width, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+    imageWrapper: { justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
     mainImage: { width: '100%', height: '100%' },
     infoContainer: { padding: 16 },
     selectedColorText: { fontSize: 14, color: '#555', marginBottom: 10 },
@@ -681,6 +736,34 @@ const styles = StyleSheet.create({
     disabledButton: { backgroundColor: '#ccc', borderColor: '#ccc' },
     cartButtonText: { color: '#000', fontWeight: 'bold', fontSize: 16 },
     buyButtonText: { color: '#000', fontWeight: 'bold', fontSize: 16 },
+    desktopActions: { marginTop: 24, gap: 12 },
+    amazonButton: {
+        height: 50,
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    amazonCartButton: {
+        backgroundColor: '#FFD814',
+        borderColor: '#FCD200',
+        borderWidth: 1,
+    },
+    amazonBuyButton: {
+        backgroundColor: '#FFA41C',
+        borderColor: '#FF8F00',
+        borderWidth: 1,
+    },
+    amazonButtonText: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#0F1111',
+    },
     closeButton: { marginTop: 10, backgroundColor: '#f0f0f0', borderRadius: 20, padding: 8 },
     sectionContainer: { backgroundColor: '#fff', marginBottom: 8, paddingHorizontal: 16, paddingVertical: 4 },
     sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12 },
@@ -732,4 +815,7 @@ const styles = StyleSheet.create({
     reviewComment: { fontSize: 14, color: '#444', lineHeight: 20 },
     viewAllReviewsBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#f0f0f0' },
     viewAllReviewsText: { fontSize: 14, fontWeight: '600', color: '#666', marginRight: 4 },
+    productRow: { flexDirection: "row", gap: 24, alignItems: "flex-start" },
+    mobileFull: { width: "100%" },
+    desktopInfo: { flex: 1, paddingLeft: 0, paddingRight: 0 },
 });
