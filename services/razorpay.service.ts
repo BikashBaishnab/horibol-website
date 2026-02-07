@@ -9,6 +9,7 @@
  * - Secure verification via Edge Functions
  */
 
+import { Platform } from 'react-native';
 import RazorpayCheckout from 'react-native-razorpay';
 
 // Config
@@ -124,6 +125,47 @@ export const RazorpayService = {
                 backdrop_color: '#000000',
             }
         };
+
+        if (Platform.OS === 'web') {
+            try {
+                // Ensure Razorpay script is loaded
+                if (!(window as any).Razorpay) {
+                    await new Promise<void>((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                        script.async = true;
+                        script.onload = () => resolve();
+                        script.onerror = () => reject(new Error('Razorpay SDK failed to load'));
+                        document.body.appendChild(script);
+                    });
+                }
+
+                const rzp = new (window as any).Razorpay({
+                    ...razorpayOptions,
+                    handler: (response: PaymentResponse) => {
+                        console.log('[Razorpay Web] Success:', response);
+                        onSuccess(response);
+                    },
+                    modal: {
+                        ...razorpayOptions.modal,
+                        ondismiss: () => {
+                            console.log('[Razorpay Web] Dismissed');
+                            onError({ code: 'PAYMENT_CANCELLED', message: 'Payment cancelled' });
+                        }
+                    }
+                });
+
+                rzp.open();
+            } catch (error: any) {
+                console.error('[Razorpay Web] Error:', error);
+                onError({
+                    code: 'WEB_SDK_ERROR',
+                    message: error.message || 'Could not initialize payment gateway',
+                    details: error
+                });
+            }
+            return;
+        }
 
         try {
             RazorpayCheckout.open(razorpayOptions)

@@ -655,7 +655,7 @@ export default function ProductDetails() {
             {!isDesktop && (
                 <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 10, alignSelf: 'center', maxWidth: Dimensions.webMaxWidth }]}>
                     <TouchableOpacity
-                        style={[styles.cartButton, isInCart && { backgroundColor: '#eaffea', borderColor: '#4caf50' }]}
+                        style={[styles.cartButton, styles.amazonCartButton, isInCart && { backgroundColor: '#eaffea', borderColor: '#4caf50' }]}
                         disabled={isOutOfStock || addingToCart}
                         onPress={handleAddToCart}
                     >
@@ -731,7 +731,19 @@ const styles = StyleSheet.create({
     bigDiscount: { fontSize: 18, color: '#008080', fontWeight: 'bold', marginRight: 10 },
     mrpText: { fontSize: 14, color: '#999', textDecorationLine: 'line-through', marginRight: 10 },
     finalPrice: { fontSize: 20, fontWeight: 'bold', color: '#000' },
-    bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', flexDirection: 'row', padding: 12, borderTopWidth: 1, borderTopColor: '#eee', elevation: 20 },
+    bottomBar: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#fff',
+        flexDirection: 'row',
+        padding: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#eee',
+        elevation: 20,
+        zIndex: 1000,
+    },
     cartButton: { flex: 1, backgroundColor: '#fff', paddingVertical: 14, borderRadius: 8, alignItems: 'center', marginHorizontal: 6, borderWidth: 1, borderColor: '#ddd' },
     buyButton: { backgroundColor: '#FFD700', borderColor: '#FFD700' },
     disabledButton: { backgroundColor: '#ccc', borderColor: '#ccc' },
@@ -751,13 +763,13 @@ const styles = StyleSheet.create({
         elevation: 1,
     },
     amazonCartButton: {
-        backgroundColor: '#FFD814',
-        borderColor: '#FCD200',
+        backgroundColor: '#FFD700', // Brand Gold
+        borderColor: '#E6C200', // Brand Dark Gold
         borderWidth: 1,
     },
     amazonBuyButton: {
-        backgroundColor: '#FFA41C',
-        borderColor: '#FF8F00',
+        backgroundColor: '#FFD700', // Brand Gold
+        borderColor: '#E6C200', // Brand Dark Gold
         borderWidth: 1,
     },
     amazonButtonText: {

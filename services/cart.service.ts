@@ -50,9 +50,28 @@ export const addToCart = async (
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("Please log in to add items.");
 
-        const exists = await checkItemInCart(productId, variantId);
-        if (exists) return true; // Already in cart
+        // Check if item already exists to update quantity instead of inserting
+        const { data: existing, error: fetchError } = await supabase
+            .from('cart')
+            .select('id, quantity')
+            .eq('user_id', user.id)
+            .eq('product_id', productId)
+            .match(variantId ? { variant_id: variantId } : { variant_id: null })
+            .maybeSingle();
 
+        if (fetchError) throw fetchError;
+
+        if (existing) {
+            // If exists, increment quantity
+            const { error: updateError } = await supabase
+                .from('cart')
+                .update({ quantity: existing.quantity + 1 })
+                .eq('id', existing.id);
+            if (updateError) throw updateError;
+            return true;
+        }
+
+        // Insert new item
         const { error } = await supabase
             .from('cart')
             .insert([{
@@ -62,7 +81,14 @@ export const addToCart = async (
                 quantity: 1
             }]);
 
-        if (error) throw error;
+        if (error) {
+            // Handle race condition if check failed but insertion failed due to unique constraint
+            if (error.code === '23505') {
+                // Try to update quantity instead
+                return addToCart(productId, variantId);
+            }
+            throw error;
+        }
         return true;
     } catch (error) {
         console.error('Add to cart error:', error);
