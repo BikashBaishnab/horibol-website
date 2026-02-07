@@ -666,7 +666,7 @@ export default function ProductDetails() {
                         )}
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={[styles.amazonBuyButton, styles.cartButton, isOutOfStock && styles.disabledButton]}
+                        style={[styles.cartButton, styles.amazonBuyButton, isOutOfStock && styles.disabledButton]}
                         disabled={isOutOfStock}
                         onPress={handleBuyNow}
                     >

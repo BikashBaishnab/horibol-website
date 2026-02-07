@@ -149,26 +149,28 @@ export default function CartScreen() {
     };
 
     const handleDelete = async (id: number) => {
-        const performDelete = async () => {
-            const item = cartItems.find(i => i.cart_id === id);
-            if (item) {
-                await removeFromCart(id, item.product_id);
-                fetchData();
-            }
-        };
+        const item = cartItems.find(i => i.cart_id === id);
+        if (!item) return;
 
-        if (typeof window !== 'undefined' && (window as any).confirm) {
-            if (window.confirm("Are you sure you want to remove this item?")) {
-                performDelete();
-            }
-        } else {
-            Alert.alert("Remove Item", "Are you sure?", [
+        Alert.alert(
+            "Remove Item",
+            "Are you sure you want to remove this item from your cart?",
+            [
                 { text: "Cancel", style: "cancel" },
                 {
-                    text: "Remove", style: "destructive", onPress: performDelete
+                    text: "Remove",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await removeFromCart(id, item.product_id);
+                            fetchData();
+                        } catch (error) {
+                            console.error("Error removing item:", error);
+                        }
+                    }
                 }
-            ]);
-        }
+            ]
+        );
     };
 
     // Guest User View
