@@ -1,6 +1,5 @@
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { Dimensions } from '../../theme';
 
 interface WebContainerProps {
     children: React.ReactNode;
@@ -36,13 +35,11 @@ const styles = StyleSheet.create({
     innerContainer: {
         flex: 1,
         width: '100%',
-        maxWidth: Dimensions.webMaxWidth, // Standard desktop max-width
+        maxWidth: 768, // Hardcoded for exact requirement
         backgroundColor: '#ffffff',
-        // Shadow or border to distinguish the app area from the gutter
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 5,
+        // Clear separation from gutter
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: '#e9ecef',
     },
 });

@@ -68,8 +68,8 @@ export default function HomeScreen() {
 
     // Responsive grid calculation
     const numColumns = useMemo(() => {
-        if (contentWidth >= 1024) return 6;
-        if (contentWidth >= 768) return 4;
+        // Even on web, we want a mobile-like grid within the 768px container
+        if (contentWidth >= 500) return 4;
         return 2;
     }, [contentWidth]);
 
@@ -376,8 +376,8 @@ export default function HomeScreen() {
         <View style={styles.mainContainer}>
             <StatusBar style="dark" translucent backgroundColor="transparent" />
 
-            {/* Headers */}
-            {windowWidth >= 768 ? (
+            {/* Headers - Forced Mobile Style for Web within 768px */}
+            {false ? (
                 <DesktopHeader />
             ) : (
                 <LinearGradient

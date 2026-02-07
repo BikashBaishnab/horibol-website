@@ -266,8 +266,9 @@ export default function ProductDetails() {
         </View>
     );
 
-    const isDesktop = windowWidth >= 768;
-    const contentWidth = Math.min(windowWidth, Dimensions.webMaxWidth);
+    const isWeb = false; // Forced false to keep mobile styling on web per user request
+    const isDesktop = windowWidth >= 768 && !isWeb; // Only consider desktop if not forcing mobile layout
+    const contentWidth = Math.min(windowWidth, 768); // Use 768 for web, windowWidth for mobile
     const carouselWidth = isDesktop ? contentWidth * 0.45 : windowWidth;
 
     return (
