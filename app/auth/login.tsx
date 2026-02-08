@@ -1,9 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    Image,
     Keyboard,
     StyleSheet,
     Text, TextInput, TouchableOpacity,
@@ -11,12 +13,13 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { signInWithPhone } from '../../services/auth.service';
+import { signInWithGoogle, signInWithPhone } from '../../services/auth.service';
 
 export default function LoginScreen() {
     const router = useRouter();
     const [phone, setPhone] = useState('');
     const [loading, setLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
 
     const handleOpenPolicy = async (url: string) => {
         try {
@@ -35,7 +38,6 @@ export default function LoginScreen() {
         setLoading(true);
         try {
             const result = await signInWithPhone(phone);
-            // Navigate to OTP screen and pass the formatted phone number
             router.push({
                 pathname: '/auth/otp',
                 params: { phone: result.phone }
@@ -44,6 +46,20 @@ export default function LoginScreen() {
             Alert.alert("Error", error.message || "Failed to send OTP.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        setGoogleLoading(true);
+        try {
+            await signInWithGoogle();
+            router.replace('/(tabs)');
+        } catch (error: any) {
+            if (error.code !== 'ASYNC_OP_IN_PROGRESS') {
+                Alert.alert("Google Sign-In Error", error.message || "Failed to sign in with Google.");
+            }
+        } finally {
+            setGoogleLoading(false);
         }
     };
 
@@ -70,23 +86,55 @@ export default function LoginScreen() {
                                 maxLength={10}
                                 value={phone}
                                 onChangeText={setPhone}
-                                autoFocus
                             />
                         </View>
                     </View>
 
-                    {/* Button */}
+                    {/* WhatsApp OTP Button */}
                     <TouchableOpacity
                         style={[styles.button, loading && styles.buttonDisabled]}
                         onPress={handleSendOtp}
-                        disabled={loading}
+                        disabled={loading || googleLoading}
                     >
                         {loading ? (
                             <ActivityIndicator color="#000" />
                         ) : (
-                            <Text style={styles.buttonText}>Login using WhatsApp OTP</Text>
+                            <View style={styles.row}>
+                                <Ionicons name="logo-whatsapp" size={20} color="#000" style={{ marginRight: 8 }} />
+                                <Text style={styles.buttonText}>Login using WhatsApp OTP</Text>
+                            </View>
                         )}
                     </TouchableOpacity>
+
+                    {/* Separator */}
+                    <View style={styles.separatorContainer}>
+                        <View style={styles.separatorLine} />
+                        <Text style={styles.separatorText}>OR</Text>
+                        <View style={styles.separatorLine} />
+                    </View>
+
+                    {/* Social Buttons */}
+                    <View style={styles.socialContainer}>
+                        {/* Google Button */}
+                        <TouchableOpacity
+                            style={styles.socialButton}
+                            onPress={handleGoogleSignIn}
+                            disabled={loading || googleLoading}
+                        >
+                            {googleLoading ? (
+                                <ActivityIndicator color="#000" />
+                            ) : (
+                                <View style={styles.row}>
+                                    <Image
+                                        source={require('../../assets/images/google_logo.png')}
+                                        style={styles.socialIcon}
+                                        resizeMode="contain"
+                                    />
+                                    <Text style={styles.socialButtonText}>Continue with Google</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    </View>
 
                     {/* Footer Terms */}
                     <Text style={styles.termsText}>
@@ -116,11 +164,11 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#fff' },
     content: { flex: 1, padding: 24, justifyContent: 'center' },
 
-    logoContainer: { marginBottom: 40 },
+    logoContainer: { marginBottom: 30 },
     brandTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', marginBottom: 8 },
     subtitle: { fontSize: 16, color: '#666' },
 
-    inputWrapper: { marginBottom: 30 },
+    inputWrapper: { marginBottom: 20 },
     label: { fontSize: 14, color: '#333', marginBottom: 12 },
     inputContainer: {
         flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingHorizontal: 16, height: 50, backgroundColor: '#f9f9f9'
@@ -134,6 +182,50 @@ const styles = StyleSheet.create({
     buttonDisabled: { opacity: 0.7 },
     buttonText: { fontSize: 16, fontWeight: 'bold', color: '#000' },
 
+    row: { flexDirection: 'row', alignItems: 'center' },
+
+    separatorContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 20,
+    },
+    separatorLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#eee',
+    },
+    separatorText: {
+        marginHorizontal: 10,
+        color: '#999',
+        fontSize: 14,
+        fontWeight: '500'
+    },
+
+    socialContainer: {
+        gap: 12,
+        marginBottom: 30
+    },
+    socialButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        backgroundColor: '#fff'
+    },
+    socialIcon: {
+        width: 20,
+        height: 20,
+        marginRight: 10
+    },
+    socialButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333'
+    },
+
     termsText: { fontSize: 12, color: '#999', textAlign: 'center', lineHeight: 18 },
-    link: { color: '#FFD700', fontWeight: 'bold' } // Using Yellow for links as generic color
+    link: { color: '#FFD700', fontWeight: 'bold' }
 });

@@ -47,27 +47,27 @@ export default function WishlistScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [removingItem, setRemovingItem] = useState<number | null>(null);
 
+    const loadWishlist = useCallback(async () => {
+        if (!user?.id) return;
+        setLoading(true);
+        const data = await getWishlist(user.id);
+        setWishlist(data);
+        setLoading(false);
+    }, [user?.id]);
+
     useEffect(() => {
         if (user?.id) {
             loadWishlist();
         } else {
             setLoading(false);
         }
-    }, [user]);
-
-    const loadWishlist = async () => {
-        if (!user?.id) return;
-        setLoading(true);
-        const data = await getWishlist(user.id);
-        setWishlist(data);
-        setLoading(false);
-    };
+    }, [user?.id, loadWishlist]);
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
         await loadWishlist();
         setRefreshing(false);
-    }, [user]);
+    }, [loadWishlist]);
 
     const handleRemove = async (product: WishlistProduct) => {
         if (!user?.id) return;
@@ -104,7 +104,7 @@ export default function WishlistScreen() {
         try {
             await addToCart(product.product_id, product.variant_id);
             await refreshCartCount();
-        } catch (error) {
+        } catch (_error) {
             Alert.alert('Error', 'Failed to add item to cart');
             return;
         }

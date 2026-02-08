@@ -12,7 +12,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -46,20 +46,14 @@ export default function ReturnRequestScreen() {
     const [comments, setComments] = useState('');
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (itemId) {
-            loadItemDetails();
-        }
-    }, [itemId]);
-
-    const loadItemDetails = async () => {
+    const loadItemDetails = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
 
             // We need to fetch the item details to show what's being returned
             // We can reuse the order_items query pattern
-            const { data, error } = await supabase
+            const { data, error: fetchError } = await supabase
                 .from('order_items')
                 .select(`
                     *,
@@ -70,7 +64,7 @@ export default function ReturnRequestScreen() {
                 .eq('id', itemId)
                 .single();
 
-            if (error) throw error;
+            if (fetchError) throw fetchError;
             if (!data) throw new Error('Item not found');
 
             setItem(data);
@@ -80,7 +74,13 @@ export default function ReturnRequestScreen() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [itemId]);
+
+    useEffect(() => {
+        if (itemId) {
+            loadItemDetails();
+        }
+    }, [itemId, loadItemDetails]);
 
     const handleSubmit = async () => {
         if (!selectedReason) {

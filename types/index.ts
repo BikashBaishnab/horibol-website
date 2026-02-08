@@ -41,10 +41,8 @@ export interface ProductVariant {
 
 export interface ProductDetail {
     name: string;
-    brand?: {
-        id: number;
-        name: string;
-    };
+    brand?: Brand;
+    warranty_info?: string;
     selected: {
         variant_id: number | null;
         price: number;
@@ -376,4 +374,12 @@ export interface CouponValidationResult {
     error?: string;
     coupon?: Coupon;
     discountAmount?: number;
+}
+export interface Brand {
+    id: number;
+    name: string;
+    image: string | null;
+    brand_description: string | null;
+    support_contact: string | null;
+    website_url: string | null;
 }

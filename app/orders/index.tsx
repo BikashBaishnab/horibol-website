@@ -46,15 +46,7 @@ export default function OrdersScreen() {
         { key: 'cancelled', label: 'Cancelled' },
     ];
 
-    useEffect(() => {
-        if (user?.id) {
-            loadOrders();
-        } else {
-            setLoading(false);
-        }
-    }, [user]);
-
-    const loadOrders = async () => {
+    const loadOrders = useCallback(async () => {
         if (!user?.id) return;
         setLoading(true);
         const data = await getUserOrders(user.id);
@@ -70,13 +62,21 @@ export default function OrdersScreen() {
 
         setOrders(uniqueOrders);
         setLoading(false);
-    };
+    }, [user?.id]);
+
+    useEffect(() => {
+        if (user?.id) {
+            loadOrders();
+        } else {
+            setLoading(false);
+        }
+    }, [user?.id, loadOrders]);
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
         await loadOrders();
         setRefreshing(false);
-    }, [user]);
+    }, [loadOrders]);
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);

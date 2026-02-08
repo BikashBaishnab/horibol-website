@@ -8,7 +8,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     ScrollView,
@@ -35,13 +35,7 @@ export default function OrderDetailScreen() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-        if (orderId) {
-            loadOrderDetail();
-        }
-    }, [orderId]);
-
-    const loadOrderDetail = async (isRefresh = false) => {
+    const loadOrderDetail = useCallback(async (isRefresh = false) => {
         if (isRefresh) {
             setRefreshing(true);
         } else {
@@ -51,7 +45,13 @@ export default function OrderDetailScreen() {
         setOrder(data);
         setLoading(false);
         setRefreshing(false);
-    };
+    }, [orderId]);
+
+    useEffect(() => {
+        if (orderId) {
+            loadOrderDetail();
+        }
+    }, [orderId, loadOrderDetail]);
 
     const handleRefresh = () => {
         loadOrderDetail(true);
@@ -228,7 +228,7 @@ export default function OrderDetailScreen() {
                     (Date.now() - new Date(item.delivery_date).getTime()) / (1000 * 60 * 60 * 24) <= 7
                 );
                 const isReturnRequested = item.status === 'return_requested';
-                const isReturned = item.status === 'returned';
+                const _isReturned = item.status === 'returned'; // Prefixed to indicate intentionally unused for future use
 
                 return (
                     <TouchableOpacity

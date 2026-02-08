@@ -12,6 +12,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
     Alert,
     FlatList,
+    Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -152,25 +153,29 @@ export default function CartScreen() {
         const item = cartItems.find(i => i.cart_id === id);
         if (!item) return;
 
-        Alert.alert(
-            "Remove Item",
-            "Are you sure you want to remove this item from your cart?",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Remove",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            await removeFromCart(id, item.product_id);
-                            fetchData();
-                        } catch (error) {
-                            console.error("Error removing item:", error);
-                        }
-                    }
-                }
-            ]
-        );
+        const performDelete = async () => {
+            try {
+                await removeFromCart(id, item.product_id);
+                fetchData();
+            } catch (error) {
+                console.error("Error removing item:", error);
+            }
+        };
+
+        if (Platform.OS === 'web') {
+            if (window.confirm("Are you sure you want to remove this item from your cart?")) {
+                performDelete();
+            }
+        } else {
+            Alert.alert(
+                "Remove Item",
+                "Are you sure you want to remove this item from your cart?",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Remove", style: "destructive", onPress: performDelete }
+                ]
+            );
+        }
     };
 
     // Guest User View

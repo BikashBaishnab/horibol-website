@@ -1,10 +1,12 @@
-/**
- * Auth Service
- * 
- * Authentication functions for phone/OTP login.
- */
-
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
+
+// Configure Google Sign-In
+GoogleSignin.configure({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+});
 
 /**
  * Sanitizes and formats phone number to E.164 format with +91 prefix
@@ -72,9 +74,52 @@ export const verifyOtp = async (phone: string, token: string) => {
 };
 
 /**
+ * Sign in with Google
+ */
+export const signInWithGoogle = async () => {
+    try {
+        if (Platform.OS === 'web') {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin
+                }
+            });
+            if (error) throw error;
+            return data;
+        } else {
+            // Mobile Native Flow
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+
+            if (userInfo.data?.idToken) {
+                const { data, error } = await supabase.auth.signInWithIdToken({
+                    provider: 'google',
+                    token: userInfo.data.idToken,
+                });
+                if (error) throw error;
+                return data;
+            } else {
+                throw new Error('No ID token present!');
+            }
+        }
+    } catch (error: any) {
+        console.error('Google Sign-In Error:', error.message);
+        throw error;
+    }
+};
+
+/**
  * Sign out current user
  */
 export const signOut = async (): Promise<void> => {
+    if (Platform.OS !== 'web') {
+        try {
+            await GoogleSignin.signOut();
+        } catch (error) {
+            // Ignore sign out errors if not signed in with Google
+        }
+    }
     await supabase.auth.signOut();
 };
 

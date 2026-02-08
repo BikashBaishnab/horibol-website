@@ -1,7 +1,7 @@
 import { Feather, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -20,14 +20,9 @@ import {
     View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-// Mock ImageViewing to avoid problematic import on web
-const ImageViewing = ({ visible, onRequestClose }: any) => {
-    React.useEffect(() => {
-        if (visible && Platform.OS === 'web') onRequestClose?.();
-    }, [visible]);
-    return null;
-};
 
+import BrandDetailsBottomSheet from '../../components/ui/BrandDetailsBottomSheet';
+import BrandWarrantySection from '../../components/ui/BrandWarrantySection';
 import DeliveryCheck from '../../components/ui/DeliveryCheck';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
@@ -37,6 +32,23 @@ import { getProductDetail } from '../../services/product.service';
 import { getProductReviews, getReviewStats, Review, ReviewStats } from '../../services/review.service';
 import { addToWishlist, isInWishlist, removeFromWishlist } from '../../services/wishlist.service';
 import { Dimensions } from '../../theme';
+// Mock ImageViewing to avoid problematic import on web
+interface ImageViewingProps {
+    visible: boolean;
+    onRequestClose?: () => void;
+    images?: { uri: string }[];
+    imageIndex?: number;
+    backgroundColor?: string;
+    swipeToCloseEnabled?: boolean;
+    doubleTapToZoomEnabled?: boolean;
+    HeaderComponent?: React.ComponentType<{ imageIndex: number }>;
+}
+const ImageViewing: React.FC<ImageViewingProps> = ({ visible, onRequestClose }) => {
+    React.useEffect(() => {
+        if (visible && Platform.OS === 'web') onRequestClose?.();
+    }, [visible, onRequestClose]);
+    return null;
+};
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -68,9 +80,10 @@ export default function ProductDetails() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { width: windowWidth } = useWindowDimensions();
-    const { refreshCartCount, addToCart } = useCart();
+    const { addToCart } = useCart();
     const { showToast } = useToast();
     const flatListRef = React.useRef<FlatList>(null);
+
 
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -84,26 +97,10 @@ export default function ProductDetails() {
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [reviews, setReviews] = useState<Review[]>([]);
     const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
+    const [isBrandModalVisible, setIsBrandModalVisible] = useState(false);
     const { user } = useAuth();
 
-    useEffect(() => {
-        loadProduct(null);
-    }, [id]);
-
-    useEffect(() => {
-        if (data?.selected?.variant_id) {
-            setActiveImageIndex(0);
-            if (flatListRef.current && data?.images && data.images.length > 0) {
-                try {
-                    flatListRef.current.scrollToIndex({ index: 0, animated: false });
-                } catch (e) {
-                    // Ignore scroll errors on unmounted/remounting versions
-                }
-            }
-        }
-    }, [data?.selected?.variant_id]);
-
-    const loadProduct = async (variantId: number | null) => {
+    const loadProduct = useCallback(async (variantId: number | null) => {
         if (!id) return;
         if (!data) setLoading(true);
         const result = await getProductDetail(Number(id), variantId);
@@ -120,7 +117,25 @@ export default function ProductDetails() {
             }
         }
         setLoading(false);
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- checkWishlistStatus and data are intended to be excluded as they'd cause infinite loops
+    }, [id]);
+
+    useEffect(() => {
+        loadProduct(null);
+    }, [loadProduct]);
+
+    useEffect(() => {
+        if (data?.selected?.variant_id) {
+            setActiveImageIndex(0);
+            if (flatListRef.current && data?.images && data.images.length > 0) {
+                try {
+                    flatListRef.current.scrollToIndex({ index: 0, animated: false });
+                } catch (_e) {
+                    // Ignore scroll errors on unmounted/remounting versions
+                }
+            }
+        }
+    }, [data?.selected?.variant_id, data?.images]);
 
     const loadReviews = async (productId: number) => {
         const [reviewsData, stats] = await Promise.all([
@@ -163,7 +178,7 @@ export default function ProductDetails() {
                 setIsWishlisted(true);
                 showToast('Added to wishlist');
             }
-        } catch (error) {
+        } catch (_error) {
             showToast('Failed to update wishlist', 'error');
         }
         setWishlistLoading(false);
@@ -176,7 +191,8 @@ export default function ProductDetails() {
                 message: `Check out ${productName} on Horibol App!`,
                 title: productName,
             });
-        } catch (error) {
+        } catch (_error) {
+            // Share canceled or failed silently
         }
     };
 
@@ -227,7 +243,6 @@ export default function ProductDetails() {
 
     const { selected, colours, options, images } = data;
     const isOutOfStock = selected.stock === 0;
-    const footerImages = images?.map((img: string) => ({ uri: img })) || [];
     const productWeight = selected.weight_kg ? Number(selected.weight_kg) : 0.5;
 
     const highlightsData = data.highlight || selected.highlight || [];
@@ -496,6 +511,12 @@ export default function ProductDetails() {
                     isCod={data.is_cod ?? selected.is_cod}
                 />
 
+                <BrandWarrantySection
+                    brand={data.brand}
+                    warrantyInfo={data.warranty_info}
+                    onPress={() => setIsBrandModalVisible(true)}
+                />
+
                 <View style={isDesktop && styles.productRow}>
                     <View style={isDesktop ? { flex: 1.5 } : styles.mobileFull}>
                         {highlightsData && (Array.isArray(highlightsData) ? highlightsData.length > 0 : Object.keys(highlightsData).length > 0) && (
@@ -693,6 +714,13 @@ export default function ProductDetails() {
                     </View>
                 )}
             />
+
+            <BrandDetailsBottomSheet
+                visible={isBrandModalVisible}
+                onClose={() => setIsBrandModalVisible(false)}
+                brand={data.brand}
+                warrantyInfo={data.warranty_info}
+            />
         </View>
     );
 }
@@ -763,8 +791,8 @@ const styles = StyleSheet.create({
         elevation: 1,
     },
     amazonCartButton: {
-        backgroundColor: '#FFD700', // Brand Gold
-        borderColor: '#E6C200', // Brand Dark Gold
+        backgroundColor: '#FFFFFF',
+        borderColor: '#DDDDDD',
         borderWidth: 1,
     },
     amazonBuyButton: {

@@ -11,7 +11,17 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mycompany.horibol",
-      "buildNumber": "2"
+      "buildNumber": "2",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "horibol",
+              "com.googleusercontent.apps.108768584053-oukpfvs3p1b36rcvcs6ue9hsau3qqqt6"
+            ]
+          }
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -41,7 +51,14 @@
         }
       ],
       "expo-localization",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosClientId": "108768584053-oukpfvs3p1b36rcvcs6ue9hsau3qqqt6.apps.googleusercontent.com",
+          "iosUrlScheme": "com.googleusercontent.apps.108768584053-oukpfvs3p1b36rcvcs6ue9hsau3qqqt6"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
