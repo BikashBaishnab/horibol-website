@@ -42,6 +42,7 @@ const sanitizePhone = (phone: string): string => {
 export const signInWithPhone = async (phone: string): Promise<{ success: boolean; phone: string }> => {
     try {
         const formattedPhone = sanitizePhone(phone);
+        console.log('[OTP] Sending OTP to:', formattedPhone); // Debug log
 
         const { error } = await supabase.auth.signInWithOtp({
             phone: formattedPhone,
@@ -65,6 +66,7 @@ export const signInWithPhone = async (phone: string): Promise<{ success: boolean
  */
 export const verifyOtp = async (phone: string, token: string) => {
     try {
+        console.log('[OTP] Verifying OTP for phone:', phone, 'with token:', token); // Debug log
         const { data, error } = await supabase.auth.verifyOtp({
             phone: phone,
             token: token,

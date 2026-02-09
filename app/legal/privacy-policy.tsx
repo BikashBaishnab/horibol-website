@@ -49,6 +49,9 @@ export default function PrivacyPolicyScreen() {
             <LegalSection
                 title="5. Your rights"
                 content="You may request access, update or deletion of your personal information subject to applicable laws."
+                items={[
+                    "Account Deletion: If you wish to delete your account and all associated data, please email us at support@horibol.com with the subject 'Delete Account'. We will process your request within 30 days."
+                ]}
             />
 
             <LegalSection

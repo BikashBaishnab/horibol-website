@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mycompany.horibol",
+      "bundleIdentifier": "com.horibol.shop",
       "buildNumber": "2",
       "infoPlist": {
         "CFBundleURLTypes": [
@@ -30,7 +30,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.mycompany.horibol"
+      "package": "com.horibol.shop"
     },
     "web": {
       "output": "static",
