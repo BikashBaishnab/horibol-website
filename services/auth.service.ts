@@ -1,12 +1,19 @@
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 
-// Configure Google Sign-In
-GoogleSignin.configure({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-});
+// Conditionally import Google Sign-In only on native platforms
+// This prevents crashes on web where the native module isn't available
+let GoogleSignin: any = null;
+if (Platform.OS !== 'web') {
+    // Dynamic require to avoid bundling on web
+    GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+
+    // Configure Google Sign-In for native
+    GoogleSignin.configure({
+        webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    });
+}
 
 /**
  * Sanitizes and formats phone number to E.164 format with +91 prefix
@@ -113,7 +120,7 @@ export const signInWithGoogle = async () => {
  * Sign out current user
  */
 export const signOut = async (): Promise<void> => {
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== 'web' && GoogleSignin) {
         try {
             await GoogleSignin.signOut();
         } catch (error) {
