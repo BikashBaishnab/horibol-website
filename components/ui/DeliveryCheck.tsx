@@ -254,15 +254,9 @@ export default function DeliveryCheck({ weight, length, breadth, height, isCod, 
 const styles = StyleSheet.create({
     cardContainer: {
         backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 16,
-        marginVertical: 8,
-        marginHorizontal: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        elevation: 3,
+        marginTop: 10,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
     },
 
     // Header Section
