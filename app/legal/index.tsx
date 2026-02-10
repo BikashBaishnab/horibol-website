@@ -49,6 +49,13 @@ const LEGAL_LINKS = [
         description: 'Cancelling orders and replacements'
     },
     {
+        id: 'deletion',
+        title: 'Account Deletion Request',
+        icon: 'account-remove-outline',
+        route: '/legal/account-deletion',
+        description: 'Request for account and data deletion'
+    },
+    {
         id: 'contact',
         title: 'Contact Us',
         icon: 'headset',

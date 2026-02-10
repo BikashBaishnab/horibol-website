@@ -3,7 +3,7 @@
     "trailingSlash": false,
     "rewrites": [
         {
-            "source": "/(privacy-policy|terms-and-conditions|refund-and-return-policy|shipping-and-delivery-policy|cancellation-and-replacement-policy)",
+            "source": "/(privacy-policy|terms-and-conditions|refund-and-return-policy|shipping-and-delivery-policy|cancellation-and-replacement-policy|delete-account)",
             "destination": "/legal/$1"
         },
         {

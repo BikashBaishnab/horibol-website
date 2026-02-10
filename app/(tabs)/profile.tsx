@@ -58,33 +58,14 @@ export default function ProfileScreen() {
         }
     };
 
-    // Guest View
-    if (!authLoading && !user) {
+    if (authLoading) {
         return (
-            <View style={[styles.guestContainer, { paddingTop: insets.top + 60 }]}>
-                <Image
-                    source={require('../../assets/images/horibol_logo.png')}
-                    style={styles.guestLogo}
-                    resizeMode="contain"
-                />
-                <Text style={styles.guestTitle}>Welcome to Horibol</Text>
-                <Text style={styles.guestSubtitle}>
-                    Log in to view your orders, wishlist, and saved addresses.
-                </Text>
-                <Button
-                    title="Login / Sign Up"
-                    onPress={() => router.push('/auth/login')}
-                    variant="primary"
-                    size="lg"
-                    fullWidth
-                    style={styles.loginButton}
-                />
-                <Text style={styles.versionTextGuest}>App Version 1.0.0</Text>
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={Colors.primary} />
             </View>
         );
     }
 
-    // Logged In User
     const displayName = user?.phone?.replace('+91', '') || 'User';
     const displayPhone = user?.phone || '';
 
@@ -92,73 +73,98 @@ export default function ProfileScreen() {
         <View style={styles.container}>
             {/* Header */}
             <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-                <Text style={styles.headerTitle}>Account</Text>
+                <Text style={styles.headerTitle}>{user ? 'Account' : 'Profile'}</Text>
             </View>
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
-                {/* Profile Card */}
-                <View style={styles.profileCard}>
-                    <View style={styles.avatarContainer}>
-                        <Text style={styles.avatarText}>
-                            {displayName.charAt(0).toUpperCase()}
+                {user ? (
+                    <>
+                        {/* Profile Card */}
+                        <View style={styles.profileCard}>
+                            <View style={styles.avatarContainer}>
+                                <Text style={styles.avatarText}>
+                                    {displayName.charAt(0).toUpperCase()}
+                                </Text>
+                            </View>
+                            <View style={styles.profileDetails}>
+                                <Text style={styles.userName}>{displayName}</Text>
+                                {displayPhone && (
+                                    <Text style={styles.userPhone}>{displayPhone}</Text>
+                                )}
+                            </View>
+                            <TouchableOpacity style={styles.editIcon}>
+                                <Ionicons name="chevron-forward" size={22} color={Colors.text.tertiary} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* My Orders Full Width CTA */}
+                        <TouchableOpacity
+                            style={styles.ordersCta}
+                            onPress={() => handleProtectedAction('/orders')}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.ordersCtaLeft}>
+                                <View style={styles.ordersIconContainer}>
+                                    <MaterialCommunityIcons name="package-variant" size={24} color={Colors.primary} />
+                                </View>
+                                <View>
+                                    <Text style={styles.ordersCtaTitle}>My Orders</Text>
+                                    <Text style={styles.ordersCtaSubtitle}>Track, return, or buy again</Text>
+                                </View>
+                            </View>
+                            <Ionicons name="chevron-forward" size={22} color={Colors.text.tertiary} />
+                        </TouchableOpacity>
+
+                        {/* Section: Account Settings */}
+                        <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>ACCOUNT SETTINGS</Text>
+                            <View style={styles.menuGroup}>
+                                <MenuItem
+                                    icon="map-marker-outline"
+                                    label="Saved Addresses"
+                                    onPress={handleManageAddress}
+                                    loading={loadingAction}
+                                />
+                                <MenuItem
+                                    icon="heart-outline"
+                                    label="My Wishlist"
+                                    onPress={() => handleProtectedAction('/wishlist')}
+                                />
+                                <MenuItem
+                                    icon="bell-outline"
+                                    label="Notifications"
+                                    onPress={() => router.push('/notifications')}
+                                />
+                            </View>
+                        </View>
+                    </>
+                ) : (
+                    /* Premium Guest Header */
+                    <View style={styles.premiumGuestCard}>
+                        <Image
+                            source={require('../../assets/images/horibol_logo.png')}
+                            style={styles.guestLogo}
+                            resizeMode="contain"
+                        />
+                        <Text style={styles.guestTitle}>Experience Horibol</Text>
+                        <Text style={styles.guestSubtitle}>
+                            Log in to track orders, save addresses, and get a personalized experience.
                         </Text>
-                    </View>
-                    <View style={styles.profileDetails}>
-                        <Text style={styles.userName}>{displayName}</Text>
-                        {displayPhone && (
-                            <Text style={styles.userPhone}>{displayPhone}</Text>
-                        )}
-                    </View>
-                    <TouchableOpacity style={styles.editIcon}>
-                        <Ionicons name="chevron-forward" size={22} color={Colors.text.tertiary} />
-                    </TouchableOpacity>
-                </View>
-
-                {/* My Orders Full Width CTA */}
-                <TouchableOpacity
-                    style={styles.ordersCta}
-                    onPress={() => handleProtectedAction('/orders')}
-                    activeOpacity={0.7}
-                >
-                    <View style={styles.ordersCtaLeft}>
-                        <View style={styles.ordersIconContainer}>
-                            <MaterialCommunityIcons name="package-variant" size={24} color={Colors.primary} />
-                        </View>
-                        <View>
-                            <Text style={styles.ordersCtaTitle}>My Orders</Text>
-                            <Text style={styles.ordersCtaSubtitle}>Track, return, or buy again</Text>
-                        </View>
-                    </View>
-                    <Ionicons name="chevron-forward" size={22} color={Colors.text.tertiary} />
-                </TouchableOpacity>
-
-                {/* Section: Account Settings */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>ACCOUNT SETTINGS</Text>
-                    <View style={styles.menuGroup}>
-                        <MenuItem
-                            icon="map-marker-outline"
-                            label="Saved Addresses"
-                            onPress={handleManageAddress}
-                            loading={loadingAction}
-                        />
-                        <MenuItem
-                            icon="heart-outline"
-                            label="My Wishlist"
-                            onPress={() => handleProtectedAction('/wishlist')}
-                        />
-                        <MenuItem
-                            icon="bell-outline"
-                            label="Notifications"
-                            onPress={() => router.push('/notifications')}
+                        <Button
+                            title="Login / Sign Up"
+                            onPress={() => router.push('/auth/login')}
+                            variant="primary"
+                            size="lg"
+                            fullWidth
+                            style={styles.loginButton}
                         />
                     </View>
-                </View>
+                )}
 
-                {/* Section: Help & Support */}
+                {/* Section: Help & Support - ALWAYS PUBLIC */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>HELP & SUPPORT</Text>
                     <View style={styles.menuGroup}>
@@ -180,11 +186,13 @@ export default function ProfileScreen() {
                     </View>
                 </View>
 
-                {/* Logout */}
-                <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
-                    <MaterialCommunityIcons name="logout" size={20} color={Colors.semantic.error} />
-                    <Text style={styles.logoutText}>Log Out</Text>
-                </TouchableOpacity>
+                {/* Logout - Only for logged in */}
+                {user && (
+                    <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
+                        <MaterialCommunityIcons name="logout" size={20} color={Colors.semantic.error} />
+                        <Text style={styles.logoutText}>Log Out</Text>
+                    </TouchableOpacity>
+                )}
 
                 <Text style={styles.versionText}>App Version 1.0.0</Text>
             </ScrollView>
@@ -213,40 +221,43 @@ const MenuItem = ({ icon, label, onPress, loading }: {
 );
 
 const styles = StyleSheet.create({
-    // Guest Styles
-    guestContainer: {
+    loadingContainer: {
         flex: 1,
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
         alignItems: 'center',
-        padding: Spacing.xxxl,
-        backgroundColor: Colors.background.surface
+        backgroundColor: Colors.background.surface,
+    },
+    // Guest Styles
+    premiumGuestCard: {
+        backgroundColor: Colors.background.surface,
+        margin: Spacing.md,
+        padding: Spacing.xl,
+        borderRadius: BorderRadius.xl,
+        alignItems: 'center',
+        ...Shadows.md,
     },
     guestLogo: {
-        width: 150,
-        height: 60,
-        marginBottom: Spacing.xl
+        width: 140,
+        height: 50,
+        marginBottom: Spacing.lg
     },
     guestTitle: {
-        fontSize: FontSize.xxxl,
+        fontSize: FontSize.xl,
         fontWeight: FontWeight.bold,
         color: Colors.text.primary,
-        marginBottom: Spacing.sm
+        marginBottom: Spacing.xs,
+        textAlign: 'center'
     },
     guestSubtitle: {
-        fontSize: FontSize.md,
+        fontSize: FontSize.sm,
         color: Colors.text.secondary,
         textAlign: 'center',
-        marginBottom: Spacing.huge,
-        lineHeight: 22
+        marginBottom: Spacing.xl,
+        lineHeight: 20,
+        paddingHorizontal: Spacing.sm
     },
     loginButton: {
         borderRadius: BorderRadius.md,
-    },
-    versionTextGuest: {
-        position: 'absolute',
-        bottom: 30,
-        color: Colors.text.disabled,
-        fontSize: FontSize.sm
     },
 
     // Main Container
