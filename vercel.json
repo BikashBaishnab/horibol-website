@@ -33,6 +33,10 @@
     ],
     "rewrites": [
         {
+            "source": "/assets/images/(.*)",
+            "destination": "/assets/assets/images/$1"
+        },
+        {
             "source": "/(privacy-policy|terms-and-conditions|refund-and-return-policy|shipping-and-delivery-policy|cancellation-and-replacement-policy|delete-account)",
             "destination": "/legal/$1"
         },
