@@ -177,7 +177,7 @@ export interface HomeSection {
     subtitle?: string;
     layout_type: 'scroll_horizontal' | 'grid_2x2' | 'staggered' | 'banner';
     bg_color: string;
-    header_bg_image?: string;
+    bg_image?: string;
     sort_order: number;
     is_active: boolean;
     items?: HomeSectionItem[];
@@ -186,16 +186,14 @@ export interface HomeSection {
 export interface HomeSectionItem {
     id: number;
     section_id: number;
-    item_type: 'product' | 'brand' | 'category' | 'custom';
+    title?: string;
+    subtitle?: string;
+    image_url?: string;
+    action_type?: 'none' | 'product' | 'category';
     product_id?: number;
-    brand_id?: number;
     category_id?: number;
-    display_image?: string;
-    display_title?: string;
-    display_footer?: string;
-    action_type?: 'product' | 'category' | 'url';
-    action_value?: string;
     sort_order: number;
+    is_active?: boolean;
 }
 
 // ============================================================

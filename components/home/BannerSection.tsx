@@ -1,11 +1,9 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { BorderRadius, Spacing } from '../../theme';
 import type { HomeSectionItem } from '../../types';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface BannerSectionProps {
     items: HomeSectionItem[];
@@ -18,21 +16,23 @@ const BannerSection: React.FC<BannerSectionProps> = React.memo(({ items }) => {
     if (!banner) return null;
 
     const handlePress = () => {
-        if (!banner.action_type || !banner.action_value) return;
+        if (!banner.action_type || banner.action_type === 'none') return;
 
-        switch (banner.action_type) {
-            case 'product':
-                router.push(`/product/${banner.action_value}` as any);
-                break;
-            case 'category':
-                router.push({
-                    pathname: '/search-results',
-                    params: { query: banner.display_title || '' }
-                } as any);
-                break;
-            case 'url':
-                // Handle URL if needed
-                break;
+        if (banner.action_type === 'product') {
+            if (!banner.product_id) return;
+            router.push(`/product/${String(banner.product_id)}` as any);
+            return;
+        }
+
+        if (banner.action_type === 'category') {
+            if (!banner.category_id) return;
+            router.push({
+                pathname: '/category/[id]',
+                params: {
+                    id: String(banner.category_id),
+                    name: banner.title || 'Category',
+                },
+            } as any);
         }
     };
 
@@ -44,7 +44,7 @@ const BannerSection: React.FC<BannerSectionProps> = React.memo(({ items }) => {
                 style={styles.touchable}
             >
                 <Image
-                    source={{ uri: banner.display_image }}
+                    source={{ uri: banner.image_url }}
                     style={styles.image}
                     contentFit="cover"
                     cachePolicy="disk"
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     },
     touchable: {
         width: '100%',
-        height: 180, // Slightly taller for better visibility
+        height: 180,
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
     },

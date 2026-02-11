@@ -117,11 +117,25 @@ export const getProductsByCategory = async (
         const from = page * pageSize;
         const to = from + pageSize - 1;
 
-        const { data, error } = await supabase
+        // Include one-level child categories so parent category cards still return products.
+        const categoryIds = [categoryId];
+        const { data: childCategories, error: childError } = await supabase
+            .from('category')
+            .select('id')
+            .eq('parent_id', categoryId);
+
+        if (!childError && childCategories?.length) {
+            categoryIds.push(...childCategories.map((row: { id: number }) => row.id));
+        }
+
+        const query = supabase
             .from('product_detail_view')
             .select('*')
-            .eq('category_id', categoryId)
             .range(from, to);
+
+        const { data, error } = categoryIds.length > 1
+            ? await query.in('category_id', categoryIds)
+            : await query.eq('category_id', categoryId);
 
         if (error) {
             console.error('Error fetching products by category:', error);

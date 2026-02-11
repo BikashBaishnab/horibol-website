@@ -14,6 +14,7 @@ interface SectionRendererProps {
 
 const SectionRenderer: React.FC<SectionRendererProps> = React.memo(({ section }) => {
     const { items = [] } = section;
+    const sectionBackgroundImage = section.bg_image;
 
     const renderLayout = () => {
         switch (section.layout_type) {
@@ -33,32 +34,25 @@ const SectionRenderer: React.FC<SectionRendererProps> = React.memo(({ section })
     const hasHeader = section.title && section.title.trim() !== '';
 
     return (
-        <View style={[styles.container, { backgroundColor: section.bg_color }]}>
-            {/* Header Background Decoration (Optional) */}
-            {section.header_bg_image && (
+        <View style={[styles.container, { backgroundColor: section.bg_color || Colors.background.primary }]}>
+            {sectionBackgroundImage ? (
                 <Image
-                    source={{ uri: section.header_bg_image }}
+                    source={{ uri: sectionBackgroundImage }}
                     style={styles.headerBgImage}
                     contentFit="cover"
                 />
-            )}
+            ) : null}
 
-            {/* Section Header */}
             {hasHeader && (
                 <View style={styles.header}>
                     <View style={styles.headerTitleContainer}>
                         <Text style={styles.title}>{section.title}</Text>
-                        {section.subtitle && (
-                            <Text style={styles.subtitle}>{section.subtitle}</Text>
-                        )}
+                        {section.subtitle ? <Text style={styles.subtitle}>{section.subtitle}</Text> : null}
                     </View>
                 </View>
             )}
 
-            {/* Layout Content */}
-            <View style={styles.content}>
-                {renderLayout()}
-            </View>
+            <View style={styles.content}>{renderLayout()}</View>
         </View>
     );
 });
@@ -72,7 +66,7 @@ const styles = StyleSheet.create({
     },
     headerBgImage: {
         ...StyleSheet.absoluteFillObject,
-        opacity: 0.05,
+        opacity: 0.08,
     },
     header: {
         flexDirection: 'row',

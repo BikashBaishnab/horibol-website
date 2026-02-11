@@ -14,22 +14,23 @@ const SDUICard: React.FC<SDUICardProps> = React.memo(({ item, width = '100%' }) 
     const router = useRouter();
 
     const handlePress = () => {
-        if (!item.action_type || !item.action_value) return;
+        if (!item.action_type || item.action_type === 'none') return;
 
-        switch (item.action_type) {
-            case 'product':
-                router.push(`/product/${item.action_value}` as any);
-                break;
-            case 'category':
-                // Navigate to search results with category name as query
-                router.push({
-                    pathname: '/search-results',
-                    params: { query: item.display_title || '' }
-                } as any);
-                break;
-            case 'url':
-                // Handle external URL or internal deep link
-                break;
+        if (item.action_type === 'product') {
+            if (!item.product_id) return;
+            router.push(`/product/${String(item.product_id)}` as any);
+            return;
+        }
+
+        if (item.action_type === 'category') {
+            if (!item.category_id) return;
+            router.push({
+                pathname: '/category/[id]',
+                params: {
+                    id: String(item.category_id),
+                    name: item.title || 'Category',
+                },
+            } as any);
         }
     };
 
@@ -41,21 +42,21 @@ const SDUICard: React.FC<SDUICardProps> = React.memo(({ item, width = '100%' }) 
         >
             <View style={styles.imageContainer}>
                 <Image
-                    source={{ uri: item.display_image || 'https://via.placeholder.com/150' }}
+                    source={{ uri: item.image_url || 'https://via.placeholder.com/150' }}
                     style={styles.image}
                     contentFit="contain"
                     cachePolicy="disk"
                 />
             </View>
             <View style={styles.content}>
-                {item.display_title && (
+                {item.title && (
                     <Text style={styles.title} numberOfLines={1}>
-                        {item.display_title}
+                        {item.title}
                     </Text>
                 )}
-                {item.display_footer && (
+                {item.subtitle && (
                     <Text style={styles.footer} numberOfLines={1}>
-                        {item.display_footer}
+                        {item.subtitle}
                     </Text>
                 )}
             </View>

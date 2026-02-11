@@ -578,6 +578,7 @@ const styles = StyleSheet.create({
     },
     slideImage: {
         height: 170,
+        borderRadius: 12,
     },
     dotsContainer: {
         flexDirection: 'row',
