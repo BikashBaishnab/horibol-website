@@ -18,11 +18,15 @@
             ]
         },
         {
-            "source": "/(.*)\\.(ttf|otf|woff2|woff)",
+            "source": "/(.*)\\.(ttf|otf|woff2|woff|eot)",
             "headers": [
                 {
                     "key": "Access-Control-Allow-Origin",
                     "value": "*"
+                },
+                {
+                    "key": "Content-Type",
+                    "value": "font/ttf"
                 },
                 {
                     "key": "Cache-Control",

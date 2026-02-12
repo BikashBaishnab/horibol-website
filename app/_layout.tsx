@@ -26,6 +26,15 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    if (fontError) {
+      console.error('Error loading fonts:', fontError);
+    }
+    if (fontsLoaded) {
+      console.log('Fonts loaded successfully');
+    }
+  }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
     registerForPushNotificationsAsync().then(token => {
       if (token) {
         console.log('Push Token Initialized:', token);
