@@ -1,8 +1,9 @@
+import { Feather, FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { Stack } from 'expo-router';
 import { PostHogProvider } from 'posthog-react-native';
 import React, { useEffect, useRef, useState } from 'react';
-import { Platform } from 'react-native';
 import { AnimatedSplashScreen, WebContainer } from '../components/common';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
@@ -12,9 +13,17 @@ import "../global.css";
 import { registerForPushNotificationsAsync } from '../services/notification.service';
 
 export default function RootLayout() {
-  const [showSplash, setShowSplash] = useState(Platform.OS !== 'web');
+  const [showSplash, setShowSplash] = useState(true);
   const notificationListener = useRef<Notifications.Subscription>(undefined);
   const responseListener = useRef<Notifications.Subscription>(undefined);
+
+  const [fontsLoaded, fontError] = useFonts({
+    ...Ionicons.font,
+    ...MaterialIcons.font,
+    ...FontAwesome.font,
+    ...Feather.font,
+    ...MaterialCommunityIcons.font,
+  });
 
   useEffect(() => {
     registerForPushNotificationsAsync().then(token => {
