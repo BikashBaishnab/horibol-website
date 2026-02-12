@@ -60,6 +60,7 @@ export default function HomeScreen() {
     const { width: windowWidth } = useWindowDimensions();
     const { user } = useAuth();
     const { showToast } = useToast();
+    const isDesktop = windowWidth >= 768;
 
     // Responsive width calculation
     const contentWidth = useMemo(() => {
@@ -377,7 +378,7 @@ export default function HomeScreen() {
             <StatusBar style="dark" translucent backgroundColor="transparent" />
 
             {/* Headers - Forced Mobile Style for Web within 768px */}
-            {false ? (
+            {isDesktop ? (
                 <DesktopHeader />
             ) : (
                 <LinearGradient

@@ -37,6 +37,10 @@
     ],
     "rewrites": [
         {
+            "source": "/assets/node_modules/(.*)",
+            "destination": "/assets/node_modules/$1"
+        },
+        {
             "source": "/assets/images/(.*)",
             "destination": "/assets/assets/images/$1"
         },
