@@ -13,7 +13,7 @@ import "../global.css";
 import { registerForPushNotificationsAsync } from '../services/notification.service';
 
 export default function RootLayout() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [isSplashFinished, setIsSplashFinished] = useState(false);
   const notificationListener = useRef<Notifications.Subscription>(undefined);
   const responseListener = useRef<Notifications.Subscription>(undefined);
 
@@ -50,8 +50,10 @@ export default function RootLayout() {
     };
   }, []);
 
-  if (showSplash) {
-    return <AnimatedSplashScreen onAnimationFinish={() => setShowSplash(false)} />;
+  const isAppReady = isSplashFinished && (fontsLoaded || !!fontError);
+
+  if (!isAppReady) {
+    return <AnimatedSplashScreen onAnimationFinish={() => setIsSplashFinished(true)} />;
   }
 
   return (
