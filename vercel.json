@@ -18,15 +18,11 @@
             ]
         },
         {
-            "source": "/(.*)\\.(ttf|otf|woff2|woff|eot)",
+            "source": "/(.*)\\.(ttf|otf|woff2|woff)",
             "headers": [
                 {
                     "key": "Access-Control-Allow-Origin",
                     "value": "*"
-                },
-                {
-                    "key": "Content-Type",
-                    "value": "font/ttf"
                 },
                 {
                     "key": "Cache-Control",
@@ -36,10 +32,6 @@
         }
     ],
     "rewrites": [
-        {
-            "source": "/assets/node_modules/(.*)",
-            "destination": "/assets/node_modules/$1"
-        },
         {
             "source": "/assets/images/(.*)",
             "destination": "/assets/assets/images/$1"

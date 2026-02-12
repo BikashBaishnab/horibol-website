@@ -16,7 +16,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: '#FFD700',
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
-          display: 'flex',
+          display: isDesktop ? 'none' : 'flex',
         },
       }}
     >
