@@ -1,4 +1,3 @@
-import { Feather, FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { Stack } from 'expo-router';
@@ -18,11 +17,11 @@ export default function RootLayout() {
   const responseListener = useRef<Notifications.Subscription>(undefined);
 
   const [fontsLoaded, fontError] = useFonts({
-    ...Ionicons.font,
-    ...MaterialIcons.font,
-    ...FontAwesome.font,
-    ...Feather.font,
-    ...MaterialCommunityIcons.font,
+    ionicons: require('../assets/fonts/Ionicons.ttf'),
+    material: require('../assets/fonts/MaterialIcons.ttf'),
+    FontAwesome: require('../assets/fonts/FontAwesome.ttf'),
+    feather: require('../assets/fonts/Feather.ttf'),
+    'material-community': require('../assets/fonts/MaterialCommunityIcons.ttf'),
   });
 
   useEffect(() => {
