@@ -24,7 +24,6 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    TouchableWithoutFeedback,
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -165,16 +164,16 @@ export default function ReturnRequestScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.container}
         >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <View style={styles.container}>
-                    <Stack.Screen options={{ headerShown: false }} />
-                    {renderHeader()}
+            <View style={styles.container}>
+                <Stack.Screen options={{ headerShown: false }} />
+                {renderHeader()}
 
-                    <ScrollView
-                        style={styles.scrollView}
-                        contentContainerStyle={styles.scrollContent}
-                        showsVerticalScrollIndicator={false}
-                    >
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
                         {/* Item Summary */}
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Item to Return</Text>
@@ -256,9 +255,8 @@ export default function ReturnRequestScreen() {
                                 <Text style={styles.submitButtonText}>Submit Return Request</Text>
                             )}
                         </TouchableOpacity>
-                    </ScrollView>
-                </View>
-            </TouchableWithoutFeedback>
+                </ScrollView>
+            </View>
         </KeyboardAvoidingView>
     );
 }

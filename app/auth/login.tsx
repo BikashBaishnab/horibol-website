@@ -6,10 +6,8 @@ import {
     ActivityIndicator,
     Alert,
     Image,
-    Keyboard,
     StyleSheet,
     Text, TextInput, TouchableOpacity,
-    TouchableWithoutFeedback,
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -64,99 +62,97 @@ export default function LoginScreen() {
     };
 
     return (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <SafeAreaView style={styles.container}>
-                <View style={styles.content}>
+        <SafeAreaView style={styles.container}>
+            <View style={styles.content}>
 
-                    {/* Logo / Branding */}
-                    <View style={styles.logoContainer}>
-                        <Text style={styles.brandTitle}>Horibol</Text>
-                        <Text style={styles.subtitle}>Log In / Sign Up to continue</Text>
+                {/* Logo / Branding */}
+                <View style={styles.logoContainer}>
+                    <Text style={styles.brandTitle}>Horibol</Text>
+                    <Text style={styles.subtitle}>Log In / Sign Up to continue</Text>
+                </View>
+
+                {/* Input Section */}
+                <View style={styles.inputWrapper}>
+                    <Text style={styles.label}>Enter your phone number</Text>
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.prefix}>+91</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="9876543210"
+                            keyboardType="number-pad"
+                            maxLength={10}
+                            value={phone}
+                            onChangeText={setPhone}
+                        />
                     </View>
+                </View>
 
-                    {/* Input Section */}
-                    <View style={styles.inputWrapper}>
-                        <Text style={styles.label}>Enter your phone number</Text>
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.prefix}>+91</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="9876543210"
-                                keyboardType="number-pad"
-                                maxLength={10}
-                                value={phone}
-                                onChangeText={setPhone}
-                            />
+                {/* WhatsApp OTP Button */}
+                <TouchableOpacity
+                    style={[styles.button, loading && styles.buttonDisabled]}
+                    onPress={handleSendOtp}
+                    disabled={loading || googleLoading}
+                >
+                    {loading ? (
+                        <ActivityIndicator color="#000" />
+                    ) : (
+                        <View style={styles.row}>
+                            <Ionicons name="logo-whatsapp" size={20} color="#000" style={{ marginRight: 8 }} />
+                            <Text style={styles.buttonText}>Login using WhatsApp OTP</Text>
                         </View>
-                    </View>
+                    )}
+                </TouchableOpacity>
 
-                    {/* WhatsApp OTP Button */}
+                {/* Separator */}
+                <View style={styles.separatorContainer}>
+                    <View style={styles.separatorLine} />
+                    <Text style={styles.separatorText}>OR</Text>
+                    <View style={styles.separatorLine} />
+                </View>
+
+                {/* Social Buttons */}
+                <View style={styles.socialContainer}>
+                    {/* Google Button */}
                     <TouchableOpacity
-                        style={[styles.button, loading && styles.buttonDisabled]}
-                        onPress={handleSendOtp}
+                        style={styles.socialButton}
+                        onPress={handleGoogleSignIn}
                         disabled={loading || googleLoading}
                     >
-                        {loading ? (
+                        {googleLoading ? (
                             <ActivityIndicator color="#000" />
                         ) : (
                             <View style={styles.row}>
-                                <Ionicons name="logo-whatsapp" size={20} color="#000" style={{ marginRight: 8 }} />
-                                <Text style={styles.buttonText}>Login using WhatsApp OTP</Text>
+                                <Image
+                                    source={require('../../assets/images/google_logo.png')}
+                                    style={styles.socialIcon}
+                                    resizeMode="contain"
+                                />
+                                <Text style={styles.socialButtonText}>Continue with Google</Text>
                             </View>
                         )}
                     </TouchableOpacity>
-
-                    {/* Separator */}
-                    <View style={styles.separatorContainer}>
-                        <View style={styles.separatorLine} />
-                        <Text style={styles.separatorText}>OR</Text>
-                        <View style={styles.separatorLine} />
-                    </View>
-
-                    {/* Social Buttons */}
-                    <View style={styles.socialContainer}>
-                        {/* Google Button */}
-                        <TouchableOpacity
-                            style={styles.socialButton}
-                            onPress={handleGoogleSignIn}
-                            disabled={loading || googleLoading}
-                        >
-                            {googleLoading ? (
-                                <ActivityIndicator color="#000" />
-                            ) : (
-                                <View style={styles.row}>
-                                    <Image
-                                        source={require('../../assets/images/google_logo.png')}
-                                        style={styles.socialIcon}
-                                        resizeMode="contain"
-                                    />
-                                    <Text style={styles.socialButtonText}>Continue with Google</Text>
-                                </View>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Footer Terms */}
-                    <Text style={styles.termsText}>
-                        By continuing, you confirm that you are above 18 years of age and agree to Horibol&apos;s{' '}
-                        <Text
-                            style={styles.link}
-                            onPress={() => handleOpenPolicy('https://www.horibol.com/terms-and-conditions')}
-                        >
-                            Terms
-                        </Text>
-                        {' '}and{' '}
-                        <Text
-                            style={styles.link}
-                            onPress={() => handleOpenPolicy('https://www.horibol.com/privacy-policy')}
-                        >
-                            Privacy Policy
-                        </Text>.
-                    </Text>
-
                 </View>
-            </SafeAreaView>
-        </TouchableWithoutFeedback>
+
+                {/* Footer Terms */}
+                <Text style={styles.termsText}>
+                    By continuing, you confirm that you are above 18 years of age and agree to Horibol&apos;s{' '}
+                    <Text
+                        style={styles.link}
+                        onPress={() => handleOpenPolicy('https://www.horibol.com/terms-and-conditions')}
+                    >
+                        Terms
+                    </Text>
+                    {' '}and{' '}
+                    <Text
+                        style={styles.link}
+                        onPress={() => handleOpenPolicy('https://www.horibol.com/privacy-policy')}
+                    >
+                        Privacy Policy
+                    </Text>.
+                </Text>
+
+            </View>
+        </SafeAreaView>
     );
 }
 

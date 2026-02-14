@@ -3,12 +3,10 @@ import { Stack, useRouter } from 'expo-router'; // Added Stack import
 import React, { useState } from 'react';
 import {
     ActivityIndicator, Alert,
-    Keyboard,
     KeyboardAvoidingView, Platform,
     ScrollView,
     StyleSheet,
     Text, TextInput, TouchableOpacity,
-    TouchableWithoutFeedback,
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -55,100 +53,97 @@ export default function AddAddressScreen() {
     };
 
     return (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-                {/* 1. HIDE DEFAULT HEADER */}
-                <Stack.Screen options={{ headerShown: false }} />
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+            {/* 1. HIDE DEFAULT HEADER */}
+            <Stack.Screen options={{ headerShown: false }} />
 
-                {/* 2. CUSTOM PROFESSIONAL HEADER */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color="#000" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Add New Address</Text>
-                </View>
+            {/* 2. CUSTOM PROFESSIONAL HEADER */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={24} color="#000" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Add New Address</Text>
+            </View>
 
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    style={{ flex: 1 }}
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={{ flex: 1 }}
+            >
+                <ScrollView
+                    contentContainerStyle={styles.formContainer}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                 >
-                    <ScrollView
-                        contentContainerStyle={styles.formContainer}
-                        showsVerticalScrollIndicator={false}
-                        keyboardShouldPersistTaps="handled"
-                    >
+                    <Text style={styles.sectionLabel}>Contact Details</Text>
+                    <TextInput
+                        placeholder="Full Name (Required)*"
+                        style={styles.input}
+                        value={form.name}
+                        onChangeText={(t) => handleChange('name', t)}
+                    />
+                    <TextInput
+                        placeholder="Phone Number (Required)*"
+                        style={styles.input}
+                        keyboardType="phone-pad"
+                        maxLength={10}
+                        value={form.phone}
+                        onChangeText={(t) => handleChange('phone', t)}
+                    />
 
-                        <Text style={styles.sectionLabel}>Contact Details</Text>
+                    <Text style={styles.sectionLabel}>Address Details</Text>
+                    <View style={styles.row}>
                         <TextInput
-                            placeholder="Full Name (Required)*"
-                            style={styles.input}
-                            value={form.name}
-                            onChangeText={(t) => handleChange('name', t)}
+                            placeholder="Pincode*"
+                            style={[styles.input, styles.halfInput]}
+                            keyboardType="number-pad"
+                            maxLength={6}
+                            value={form.pincode}
+                            onChangeText={(t) => handleChange('pincode', t)}
                         />
                         <TextInput
-                            placeholder="Phone Number (Required)*"
-                            style={styles.input}
-                            keyboardType="phone-pad"
-                            maxLength={10}
-                            value={form.phone}
-                            onChangeText={(t) => handleChange('phone', t)}
+                            placeholder="City*"
+                            style={[styles.input, styles.halfInput]}
+                            value={form.city}
+                            onChangeText={(t) => handleChange('city', t)}
                         />
+                    </View>
 
-                        <Text style={styles.sectionLabel}>Address Details</Text>
-                        <View style={styles.row}>
-                            <TextInput
-                                placeholder="Pincode*"
-                                style={[styles.input, styles.halfInput]}
-                                keyboardType="number-pad"
-                                maxLength={6}
-                                value={form.pincode}
-                                onChangeText={(t) => handleChange('pincode', t)}
-                            />
-                            <TextInput
-                                placeholder="City*"
-                                style={[styles.input, styles.halfInput]}
-                                value={form.city}
-                                onChangeText={(t) => handleChange('city', t)}
-                            />
-                        </View>
+                    <TextInput
+                        placeholder="State (Required)*"
+                        style={styles.input}
+                        value={form.state}
+                        onChangeText={(t) => handleChange('state', t)}
+                    />
 
-                        <TextInput
-                            placeholder="State (Required)*"
-                            style={styles.input}
-                            value={form.state}
-                            onChangeText={(t) => handleChange('state', t)}
-                        />
+                    <TextInput
+                        placeholder="House No., Building Name (Required)*"
+                        style={styles.input}
+                        value={form.address_line1}
+                        onChangeText={(t) => handleChange('address_line1', t)}
+                    />
 
-                        <TextInput
-                            placeholder="House No., Building Name (Required)*"
-                            style={styles.input}
-                            value={form.address_line1}
-                            onChangeText={(t) => handleChange('address_line1', t)}
-                        />
+                    <TextInput
+                        placeholder="Road Name, Area, Colony (Optional)"
+                        style={styles.input}
+                        value={form.address_line2}
+                        onChangeText={(t) => handleChange('address_line2', t)}
+                    />
 
-                        <TextInput
-                            placeholder="Road Name, Area, Colony (Optional)"
-                            style={styles.input}
-                            value={form.address_line2}
-                            onChangeText={(t) => handleChange('address_line2', t)}
-                        />
+                </ScrollView>
+            </KeyboardAvoidingView>
 
-                    </ScrollView>
-                </KeyboardAvoidingView>
+            {/* 3. STICKY FOOTER */}
+            <View style={styles.footer}>
+                <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={loading}>
+                    {loading ? (
+                        <ActivityIndicator color="#000" />
+                    ) : (
+                        <Text style={styles.saveButtonText}>Save Address</Text>
+                    )}
+                </TouchableOpacity>
+            </View>
 
-                {/* 3. STICKY FOOTER */}
-                <View style={styles.footer}>
-                    <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={loading}>
-                        {loading ? (
-                            <ActivityIndicator color="#000" />
-                        ) : (
-                            <Text style={styles.saveButtonText}>Save Address</Text>
-                        )}
-                    </TouchableOpacity>
-                </View>
-
-            </SafeAreaView>
-        </TouchableWithoutFeedback>
+        </SafeAreaView>
     );
 }
 
